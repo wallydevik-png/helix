@@ -200,12 +200,13 @@ export const updateSettings = createServerFn({ method: "POST" })
     if (data.maxTradesPerDay !== undefined) patch.max_trades_per_day = data.maxTradesPerDay;
     if (data.minConfidence !== undefined) patch.min_confidence = data.minConfidence;
     if (data.allowedAssets) patch.allowed_assets = data.allowedAssets;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await context.supabase.from("automation_settings")
-      .update(patch).eq("user_id", context.userId);
+      .update(patch as any).eq("user_id", context.userId);
     if (error) throw error;
     await context.supabase.from("audit_log").insert({
       user_id: context.userId, action: "settings.update", entity: "automation_settings",
-      entity_id: null, payload: patch,
+      entity_id: null, payload: patch as Record<string, string | number | boolean | string[] | null>,
     });
     return { ok: true };
   });
