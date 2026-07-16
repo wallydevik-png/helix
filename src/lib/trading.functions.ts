@@ -243,33 +243,115 @@ export const setKillSwitch = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Generate a fresh AI signal. In Assisted mode → creates pending signal.
-// In Autonomous mode → runs risk gate + executes. In Manual → creates pending as info.
+// Generate a fresh AI signal from the market scanner. Picks the highest-
+// conviction opportunity from allowed assets, stores full explainability,
+// and (in Autonomous mode with a tradable direction) executes.
 export const generateAndRouteSignal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({ symbol: z.string().optional() }).default({}).parse(d))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: settings } = await supabase.from("automation_settings").select("*").eq("user_id", userId).maybeSingle();
     if (!settings) throw new Error("Settings not found");
     if (settings.kill_switch_active) throw new Error("Kill switch is active. Disable it to generate signals.");
 
-    const { generateSignal } = await import("@/lib/trading/signalGenerator.server");
-    const sig = await generateSignal(settings.allowed_assets ?? []);
+    const { analyzeSymbol, scanMarket } = await import("@/lib/trading/aiEngine.server");
+    const { listSupportedSymbols } = await import("@/lib/marketdata/service.server");
+    const universe = (settings.allowed_assets && settings.allowed_assets.length
+      ? settings.allowed_assets
+      : listSupportedSymbols().slice(0, 6));
 
+    const sig = data.symbol
+      ? await analyzeSymbol(supabase, data.symbol)
+      : (await scanMarket(supabase, universe))[0];
+    if (!sig) throw new Error("No signal produced");
+
+    const status = sig.direction === "wait" ? "expired" : "pending";
     const { data: inserted, error } = await supabase.from("signals").insert({
       user_id: userId,
       symbol: sig.symbol, side: sig.side,
       entry: sig.entry, stop_loss: sig.stopLoss, take_profit: sig.takeProfit,
       qty: sig.qty, confidence: sig.confidence, reasoning: sig.reasoning,
-      risk_reward: sig.riskReward, status: "pending",
-      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      risk_reward: sig.riskReward, status,
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      time_horizon: sig.timeHorizon, risk_level: sig.riskLevel,
+      market_regime: sig.regime,
+      indicators: sig.indicators,
+      contributions: sig.contributions,
+      risk_factors: sig.riskFactors,
     }).select().single();
     if (error) throw error;
 
-    if (settings.mode === "autonomous") {
+    if (settings.mode === "autonomous" && sig.direction !== "wait") {
       await executeSignalInternal(supabase, userId, inserted.id);
     }
     return inserted;
+  });
+
+export const scanMarketOpportunities = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { scanMarket } = await import("@/lib/trading/aiEngine.server");
+    const { listSupportedSymbols } = await import("@/lib/marketdata/service.server");
+    const { data: settings } = await context.supabase.from("automation_settings")
+      .select("allowed_assets").eq("user_id", context.userId).maybeSingle();
+    const universe = (settings?.allowed_assets && settings.allowed_assets.length
+      ? settings.allowed_assets : listSupportedSymbols());
+    return await scanMarket(context.supabase, universe);
+  });
+
+export const evaluateSignalOutcomes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { fetchLastPrice } = await import("@/lib/marketdata/service.server");
+    // Evaluate signals that are >= 30 min old and unresolved on the outcome column.
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: pending } = await supabase.from("signals").select("*")
+      .eq("user_id", userId).is("outcome_status", null)
+      .neq("side", "wait").lte("created_at", cutoff).limit(50);
+    let evaluated = 0;
+    for (const s of pending ?? []) {
+      try {
+        const price = await fetchLastPrice(s.symbol);
+        const dir = s.side === "buy" ? 1 : -1;
+        const pnlPct = ((price - Number(s.entry)) / Number(s.entry)) * dir * 100;
+        let status: string;
+        if (dir * (price - Number(s.take_profit)) >= 0) status = "hit_tp";
+        else if (dir * (Number(s.stop_loss) - price) >= 0) status = "hit_sl";
+        else status = "pending_eval";
+        await supabase.from("signals").update({
+          outcome_status: status, outcome_pnl_pct: pnlPct, evaluated_at: new Date().toISOString(),
+        }).eq("id", s.id);
+        evaluated++;
+      } catch { /* ignore per-signal failures */ }
+    }
+    return { evaluated };
+  });
+
+export const getAiPerformance = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.from("signals")
+      .select("confidence,side,outcome_status,outcome_pnl_pct,market_regime,created_at")
+      .eq("user_id", context.userId).not("outcome_status", "is", null).limit(500);
+    const rows = data ?? [];
+    const resolved = rows.filter(r => r.outcome_status === "hit_tp" || r.outcome_status === "hit_sl");
+    const wins = resolved.filter(r => r.outcome_status === "hit_tp").length;
+    // Confidence calibration buckets
+    const buckets = [0.5,0.6,0.7,0.8,0.9,1.01].map((up, i, arr) => {
+      const lo = i === 0 ? 0 : arr[i-1];
+      const inB = resolved.filter(r => Number(r.confidence) >= lo && Number(r.confidence) < up);
+      const w = inB.filter(r => r.outcome_status === "hit_tp").length;
+      return { range: `${Math.round(lo*100)}-${Math.round(up*100)}%`, n: inB.length, winRate: inB.length ? w/inB.length : 0 };
+    });
+    return {
+      total: rows.length,
+      resolved: resolved.length,
+      winRate: resolved.length ? wins/resolved.length : 0,
+      avgPnlPct: rows.length ? rows.reduce((s,r)=>s+Number(r.outcome_pnl_pct ?? 0),0)/rows.length : 0,
+      calibration: buckets,
+    };
   });
 
 async function executeSignalInternal(
