@@ -276,9 +276,9 @@ export const generateAndRouteSignal = createServerFn({ method: "POST" })
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       time_horizon: sig.timeHorizon, risk_level: sig.riskLevel,
       market_regime: sig.regime,
-      indicators: sig.indicators,
-      contributions: sig.contributions,
-      risk_factors: sig.riskFactors,
+      indicators: sig.indicators as unknown as Record<string, never>,
+      contributions: sig.contributions as unknown as Record<string, never>,
+      risk_factors: sig.riskFactors as unknown as Record<string, never>,
     }).select().single();
     if (error) throw error;
 
