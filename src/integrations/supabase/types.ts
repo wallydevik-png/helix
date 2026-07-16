@@ -14,7 +14,382 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity: string | null
+          entity_id: string | null
+          id: string
+          payload: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          allowed_assets: string[]
+          kill_switch_active: boolean
+          max_daily_loss: number
+          max_trade_size: number
+          max_trades_per_day: number
+          min_confidence: number
+          mode: string
+          risk_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed_assets?: string[]
+          kill_switch_active?: boolean
+          max_daily_loss?: number
+          max_trade_size?: number
+          max_trades_per_day?: number
+          min_confidence?: number
+          mode?: string
+          risk_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed_assets?: string[]
+          kill_switch_active?: boolean
+          max_daily_loss?: number
+          max_trade_size?: number
+          max_trades_per_day?: number
+          min_confidence?: number
+          mode?: string
+          risk_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exchange_connections: {
+        Row: {
+          connector_id: string
+          created_at: string
+          credential_ciphertext: string | null
+          health: string
+          id: string
+          label: string
+          last_error: string | null
+          last_sync_at: string | null
+          read_enabled: boolean
+          status: string
+          trading_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          credential_ciphertext?: string | null
+          health?: string
+          id?: string
+          label: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          read_enabled?: boolean
+          status?: string
+          trading_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          credential_ciphertext?: string | null
+          health?: string
+          id?: string
+          label?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          read_enabled?: boolean
+          status?: string
+          trading_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          account_id: string
+          created_at: string
+          fees: number | null
+          filled_at: string | null
+          filled_price: number | null
+          id: string
+          limit_price: number | null
+          order_type: string
+          position_id: string | null
+          qty: number
+          side: string
+          slippage_bps: number | null
+          status: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          fees?: number | null
+          filled_at?: string | null
+          filled_price?: number | null
+          id?: string
+          limit_price?: number | null
+          order_type?: string
+          position_id?: string | null
+          qty: number
+          side: string
+          slippage_bps?: number | null
+          status?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          fees?: number | null
+          filled_at?: string | null
+          filled_price?: number | null
+          id?: string
+          limit_price?: number | null
+          order_type?: string
+          position_id?: string | null
+          qty?: number
+          side?: string
+          slippage_bps?: number | null
+          status?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paper_accounts: {
+        Row: {
+          base_currency: string
+          cash_balance: number
+          connection_id: string | null
+          created_at: string
+          equity: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_currency?: string
+          cash_balance?: number
+          connection_id?: string | null
+          created_at?: string
+          equity?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_currency?: string
+          cash_balance?: number
+          connection_id?: string | null
+          created_at?: string
+          equity?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_accounts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          account_id: string
+          ai_confidence: number | null
+          ai_reasoning: string | null
+          avg_entry: number
+          closed_at: string | null
+          exit_price: number | null
+          exit_reason: string | null
+          id: string
+          opened_at: string
+          qty: number
+          realized_pnl: number | null
+          side: string
+          status: string
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+          trailing_stop_pct: number | null
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          avg_entry: number
+          closed_at?: string | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          opened_at?: string
+          qty: number
+          realized_pnl?: number | null
+          side: string
+          status?: string
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+          trailing_stop_pct?: number | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          avg_entry?: number
+          closed_at?: string | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          opened_at?: string
+          qty?: number
+          realized_pnl?: number | null
+          side?: string
+          status?: string
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+          trailing_stop_pct?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          autonomous_disclaimer_acked_at: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          autonomous_disclaimer_acked_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          autonomous_disclaimer_acked_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signals: {
+        Row: {
+          confidence: number
+          created_at: string
+          entry: number
+          expires_at: string | null
+          id: string
+          qty: number
+          reasoning: string
+          resolved_at: string | null
+          risk_reward: number | null
+          side: string
+          status: string
+          stop_loss: number
+          symbol: string
+          take_profit: number
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          entry: number
+          expires_at?: string | null
+          id?: string
+          qty: number
+          reasoning: string
+          resolved_at?: string | null
+          risk_reward?: number | null
+          side: string
+          status?: string
+          stop_loss: number
+          symbol: string
+          take_profit: number
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          entry?: number
+          expires_at?: string | null
+          id?: string
+          qty?: number
+          reasoning?: string
+          resolved_at?: string | null
+          risk_reward?: number | null
+          side?: string
+          status?: string
+          stop_loss?: number
+          symbol?: string
+          take_profit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
