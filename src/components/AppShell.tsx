@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity,
+  TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity, LineChart,
   History, Sliders, BarChart3, Power, LogOut,
 } from "lucide-react";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/market", label: "Market Scanner", icon: LineChart },
   { to: "/accounts", label: "Connected Accounts", icon: Plug },
   { to: "/signals", label: "AI Signals", icon: Signal },
   { to: "/approvals", label: "Approvals", icon: CheckSquare },
