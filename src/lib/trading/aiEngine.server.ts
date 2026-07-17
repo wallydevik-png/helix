@@ -44,6 +44,11 @@ const TARGET_NOTIONAL = 500;
 
 export async function analyzeSymbol(supabase: SupabaseClient | null, symbol: string): Promise<AiSignal> {
   const candles = await fetchCandles(supabase, symbol, "15m", 200);
+  return analyzeCandles(symbol, candles);
+}
+
+// Pure candle-driven analyzer — used by both live scanner and backtests.
+export function analyzeCandles(symbol: string, candles: import("@/lib/analysis/indicators").Candle[]): AiSignal {
   const closes = candles.map(c => c.close);
   const last = closes[closes.length - 1];
 
