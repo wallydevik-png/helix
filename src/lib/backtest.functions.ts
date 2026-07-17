@@ -30,7 +30,7 @@ export const runBacktestFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { runBacktest } = await import("@/lib/backtest/engine.server");
     const result = await runBacktest(context.supabase, data);
-    const { data: run, error } = await context.supabase.from("backtest_runs").insert({
+    const { data: run, error } = await context.supabase.from("backtest_runs").insert(asJson({
       user_id: context.userId,
       strategy_id: data.strategyId ?? null,
       kind: "single",
@@ -39,13 +39,13 @@ export const runBacktestFn = createServerFn({ method: "POST" })
       interval: data.interval,
       from_ts: new Date(result.fromTs).toISOString(),
       to_ts: new Date(result.toTs).toISOString(),
-      params: result.params as unknown as Record<string, unknown>,
-      metrics: result.metrics as unknown as Record<string, unknown>,
-      equity_curve: result.equity as unknown as Record<string, unknown>[],
-    }).select().single();
+      params: result.params,
+      metrics: result.metrics,
+      equity_curve: result.equity,
+    })).select().single();
     if (error) throw error;
     if (result.trades.length) {
-      await context.supabase.from("backtest_trades").insert(
+      await context.supabase.from("backtest_trades").insert(asJson(
         result.trades.map(t => ({
           run_id: run.id, user_id: context.userId,
           symbol: t.symbol, side: t.side,
@@ -55,13 +55,13 @@ export const runBacktestFn = createServerFn({ method: "POST" })
           exit_reason: t.exitReason, confidence: t.confidence,
           market_regime: t.regime, indicators: t.indicators,
         })),
-      );
+      ));
     }
     await context.supabase.from("audit_log").insert({
       user_id: context.userId, action: "backtest.run", entity: "backtest_runs",
       entity_id: run.id, payload: { symbol: data.symbol, interval: data.interval },
     });
-    return { runId: run.id, metrics: result.metrics as unknown as Record<string, unknown>, trades: result.trades.length };
+    return { runId: run.id, metrics: result.metrics, trades: result.trades.length };
   });
 
 export const runWalkForwardFn = createServerFn({ method: "POST" })
@@ -71,7 +71,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
     const { runWalkForward } = await import("@/lib/backtest/engine.server");
     const { train, validation, oos } = await runWalkForward(context.supabase, data);
 
-    const { data: parent, error: pErr } = await context.supabase.from("backtest_runs").insert({
+    const { data: parent, error: pErr } = await context.supabase.from("backtest_runs").insert(asJson({
       user_id: context.userId,
       strategy_id: data.strategyId ?? null,
       kind: "walkforward_train",
@@ -79,20 +79,20 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
       symbol: data.symbol, interval: data.interval,
       from_ts: new Date(train.fromTs).toISOString(), to_ts: new Date(train.toTs).toISOString(),
       params: train.params, metrics: train.metrics, equity_curve: train.equity,
-    }).select().single();
-    if (pErr) throw pErr;
+    })).select().single();
+    if (pErr || !parent) throw pErr ?? new Error('Failed to create parent run');
 
     async function insertChild(kind: string, r: typeof validation) {
-      const { data: row, error } = await context.supabase.from("backtest_runs").insert({
+      const { data: row, error } = await context.supabase.from("backtest_runs").insert(asJson({
         user_id: context.userId, parent_run_id: parent.id, strategy_id: data.strategyId ?? null,
         kind, label: `${kind.replace('walkforward_','')} · ${data.symbol}`,
         symbol: data.symbol, interval: data.interval,
         from_ts: new Date(r.fromTs).toISOString(), to_ts: new Date(r.toTs).toISOString(),
         params: r.params, metrics: r.metrics, equity_curve: r.equity,
-      }).select().single();
+      })).select().single();
       if (error) throw error;
       if (r.trades.length) {
-        await context.supabase.from("backtest_trades").insert(
+        await context.supabase.from("backtest_trades").insert(asJson(
           r.trades.map(t => ({
             run_id: row.id, user_id: context.userId,
             symbol: t.symbol, side: t.side,
@@ -102,13 +102,13 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
             exit_reason: t.exitReason, confidence: t.confidence,
             market_regime: t.regime, indicators: t.indicators,
           })),
-        );
+        ));
       }
       return row.id;
     }
     // Save train's trades on the parent too
     if (train.trades.length) {
-      await context.supabase.from("backtest_trades").insert(
+      await context.supabase.from("backtest_trades").insert(asJson(
         train.trades.map(t => ({
           run_id: parent.id, user_id: context.userId,
           symbol: t.symbol, side: t.side,
@@ -118,7 +118,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
           exit_reason: t.exitReason, confidence: t.confidence,
           market_regime: t.regime, indicators: t.indicators,
         })),
-      );
+      ));
     }
     await insertChild("walkforward_validation", validation);
     await insertChild("walkforward_oos", oos);
