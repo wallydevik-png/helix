@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity, LineChart,
-  History, Sliders, BarChart3, Power, LogOut,
+  History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target,
 } from "lucide-react";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ const NAV = [
   { to: "/signals", label: "AI Signals", icon: Signal },
   { to: "/approvals", label: "Approvals", icon: CheckSquare },
   { to: "/positions", label: "Positions", icon: Activity },
+  { to: "/lab", label: "Strategy Lab", icon: FlaskConical },
+  { to: "/accuracy", label: "AI Accuracy", icon: Target },
   { to: "/history", label: "History", icon: History },
   { to: "/automation", label: "Automation", icon: Sliders },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
