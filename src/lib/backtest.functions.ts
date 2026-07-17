@@ -81,6 +81,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
       params: train.params, metrics: train.metrics, equity_curve: train.equity,
     })).select().single();
     if (pErr || !parent) throw pErr ?? new Error('Failed to create parent run');
+    const parentId = parent.id;
 
     async function insertChild(kind: string, r: typeof validation) {
       const { data: row, error } = await context.supabase.from("backtest_runs").insert(asJson({
