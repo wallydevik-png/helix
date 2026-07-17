@@ -3,6 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// Generated Supabase row types are strict about jsonb columns; our engine
+// returns typed objects that are Json-compatible at runtime but not by TS.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const asJson = <T,>(v: T) => v as any;
+
 const IntervalSchema = z.enum(["5m", "15m", "1h", "4h", "1d"]);
 
 const RunSchema = z.object({
