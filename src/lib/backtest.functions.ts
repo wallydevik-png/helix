@@ -85,7 +85,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
 
     async function insertChild(kind: string, r: typeof validation) {
       const { data: row, error } = await context.supabase.from("backtest_runs").insert(asJson({
-        user_id: context.userId, parent_run_id: parent.id, strategy_id: data.strategyId ?? null,
+        user_id: context.userId, parent_run_id: parentId, strategy_id: data.strategyId ?? null,
         kind, label: `${kind.replace('walkforward_','')} · ${data.symbol}`,
         symbol: data.symbol, interval: data.interval,
         from_ts: new Date(r.fromTs).toISOString(), to_ts: new Date(r.toTs).toISOString(),
