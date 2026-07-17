@@ -111,7 +111,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
     if (train.trades.length) {
       await context.supabase.from("backtest_trades").insert(asJson(
         train.trades.map(t => ({
-          run_id: parent.id, user_id: context.userId,
+          run_id: parentId, user_id: context.userId,
           symbol: t.symbol, side: t.side,
           entry_ts: new Date(t.entryTs).toISOString(), entry_price: t.entryPrice,
           exit_ts: new Date(t.exitTs).toISOString(), exit_price: t.exitPrice,
@@ -124,7 +124,7 @@ export const runWalkForwardFn = createServerFn({ method: "POST" })
     await insertChild("walkforward_validation", validation);
     await insertChild("walkforward_oos", oos);
 
-    return { runId: parent.id, train: train.metrics, validation: validation.metrics, oos: oos.metrics };
+    return { runId: parentId, train: train.metrics, validation: validation.metrics, oos: oos.metrics };
   });
 
 export const listBacktests = createServerFn({ method: "GET" })
