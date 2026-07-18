@@ -19,7 +19,7 @@ function Shadow() {
   const { data } = useQuery({ queryKey: ["shadow"], queryFn: () => listFn(), refetchInterval: 30000 });
 
   async function record() {
-    try { const r = await recordShadowFromSignal ? await recordFn({ data: {} }) : null; if (r) toast.success(`Recorded shadow ${r.side.toUpperCase()} ${r.symbol}`); qc.invalidateQueries({ queryKey: ["shadow"] }); }
+    try { const r = await recordFn({ data: {} }); toast.success(`Recorded shadow ${r.side.toUpperCase()} ${r.symbol}`); qc.invalidateQueries({ queryKey: ["shadow"] }); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
   async function ev() {
