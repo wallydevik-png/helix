@@ -313,6 +313,59 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_runs: {
+        Row: {
+          bars: number
+          best_metrics: Json
+          best_params: Json
+          created_at: string
+          id: string
+          interval: string
+          param_grid: Json
+          results: Json
+          strategy_id: string | null
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bars: number
+          best_metrics: Json
+          best_params: Json
+          created_at?: string
+          id?: string
+          interval: string
+          param_grid: Json
+          results: Json
+          strategy_id?: string | null
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bars?: number
+          best_metrics?: Json
+          best_params?: Json
+          created_at?: string
+          id?: string
+          interval?: string
+          param_grid?: Json
+          results?: Json
+          strategy_id?: string | null
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_runs_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           account_id: string
@@ -518,6 +571,86 @@ export type Database = {
         }
         Relationships: []
       }
+      shadow_trades: {
+        Row: {
+          close_price: number | null
+          close_ts: string | null
+          confidence: number
+          created_at: string
+          entry_price: number
+          entry_ts: string
+          exit_reason: string | null
+          id: string
+          indicators: Json
+          market_regime: string | null
+          pnl: number | null
+          pnl_pct: number | null
+          qty: number
+          side: string
+          status: string
+          stop_loss: number
+          strategy_id: string | null
+          symbol: string
+          take_profit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          close_price?: number | null
+          close_ts?: string | null
+          confidence: number
+          created_at?: string
+          entry_price: number
+          entry_ts?: string
+          exit_reason?: string | null
+          id?: string
+          indicators?: Json
+          market_regime?: string | null
+          pnl?: number | null
+          pnl_pct?: number | null
+          qty: number
+          side: string
+          status?: string
+          stop_loss: number
+          strategy_id?: string | null
+          symbol: string
+          take_profit: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          close_price?: number | null
+          close_ts?: string | null
+          confidence?: number
+          created_at?: string
+          entry_price?: number
+          entry_ts?: string
+          exit_reason?: string | null
+          id?: string
+          indicators?: Json
+          market_regime?: string | null
+          pnl?: number | null
+          pnl_pct?: number | null
+          qty?: number
+          side?: string
+          status?: string
+          stop_loss?: number
+          strategy_id?: string | null
+          symbol?: string
+          take_profit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shadow_trades_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signals: {
         Row: {
           confidence: number
@@ -601,34 +734,52 @@ export type Database = {
       }
       strategies: {
         Row: {
+          capital_allocation_pct: number
           created_at: string
+          health_notes: string | null
+          health_status: string
           id: string
           interval: string
+          is_active: boolean
+          last_evaluated_at: string | null
           name: string
           notes: string | null
           params: Json
+          strategy_type: string
           symbol: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          capital_allocation_pct?: number
           created_at?: string
+          health_notes?: string | null
+          health_status?: string
           id?: string
           interval?: string
+          is_active?: boolean
+          last_evaluated_at?: string | null
           name: string
           notes?: string | null
           params?: Json
+          strategy_type?: string
           symbol: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          capital_allocation_pct?: number
           created_at?: string
+          health_notes?: string | null
+          health_status?: string
           id?: string
           interval?: string
+          is_active?: boolean
+          last_evaluated_at?: string | null
           name?: string
           notes?: string | null
           params?: Json
+          strategy_type?: string
           symbol?: string
           updated_at?: string
           user_id?: string

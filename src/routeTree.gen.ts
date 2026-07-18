@@ -13,8 +13,12 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedStrategiesRouteImport } from './routes/_authenticated/strategies'
 import { Route as AuthenticatedSignalsRouteImport } from './routes/_authenticated/signals'
+import { Route as AuthenticatedShadowRouteImport } from './routes/_authenticated/shadow'
 import { Route as AuthenticatedPositionsRouteImport } from './routes/_authenticated/positions'
+import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
+import { Route as AuthenticatedOptimizerRouteImport } from './routes/_authenticated/optimizer'
 import { Route as AuthenticatedMarketRouteImport } from './routes/_authenticated/market'
 import { Route as AuthenticatedLabRouteImport } from './routes/_authenticated/lab'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
@@ -46,14 +50,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStrategiesRoute = AuthenticatedStrategiesRouteImport.update({
+  id: '/strategies',
+  path: '/strategies',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSignalsRoute = AuthenticatedSignalsRouteImport.update({
   id: '/signals',
   path: '/signals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedShadowRoute = AuthenticatedShadowRouteImport.update({
+  id: '/shadow',
+  path: '/shadow',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPositionsRoute = AuthenticatedPositionsRouteImport.update({
   id: '/positions',
   path: '/positions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOptimizerRoute = AuthenticatedOptimizerRouteImport.update({
+  id: '/optimizer',
+  path: '/optimizer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMarketRoute = AuthenticatedMarketRouteImport.update({
@@ -127,8 +151,12 @@ export interface FileRoutesByFullPath {
   '/history': typeof AuthenticatedHistoryRoute
   '/lab': typeof AuthenticatedLabRoute
   '/market': typeof AuthenticatedMarketRoute
+  '/optimizer': typeof AuthenticatedOptimizerRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
   '/positions': typeof AuthenticatedPositionsRoute
+  '/shadow': typeof AuthenticatedShadowRoute
   '/signals': typeof AuthenticatedSignalsRoute
+  '/strategies': typeof AuthenticatedStrategiesRoute
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
 }
@@ -145,8 +173,12 @@ export interface FileRoutesByTo {
   '/history': typeof AuthenticatedHistoryRoute
   '/lab': typeof AuthenticatedLabRoute
   '/market': typeof AuthenticatedMarketRoute
+  '/optimizer': typeof AuthenticatedOptimizerRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
   '/positions': typeof AuthenticatedPositionsRoute
+  '/shadow': typeof AuthenticatedShadowRoute
   '/signals': typeof AuthenticatedSignalsRoute
+  '/strategies': typeof AuthenticatedStrategiesRoute
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
 }
@@ -165,8 +197,12 @@ export interface FileRoutesById {
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/lab': typeof AuthenticatedLabRoute
   '/_authenticated/market': typeof AuthenticatedMarketRoute
+  '/_authenticated/optimizer': typeof AuthenticatedOptimizerRoute
+  '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/positions': typeof AuthenticatedPositionsRoute
+  '/_authenticated/shadow': typeof AuthenticatedShadowRoute
   '/_authenticated/signals': typeof AuthenticatedSignalsRoute
+  '/_authenticated/strategies': typeof AuthenticatedStrategiesRoute
   '/_authenticated/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/_authenticated/backtests/$id': typeof AuthenticatedBacktestsIdRoute
 }
@@ -185,8 +221,12 @@ export interface FileRouteTypes {
     | '/history'
     | '/lab'
     | '/market'
+    | '/optimizer'
+    | '/portfolio'
     | '/positions'
+    | '/shadow'
     | '/signals'
+    | '/strategies'
     | '/accounts/new'
     | '/backtests/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -203,8 +243,12 @@ export interface FileRouteTypes {
     | '/history'
     | '/lab'
     | '/market'
+    | '/optimizer'
+    | '/portfolio'
     | '/positions'
+    | '/shadow'
     | '/signals'
+    | '/strategies'
     | '/accounts/new'
     | '/backtests/$id'
   id:
@@ -222,8 +266,12 @@ export interface FileRouteTypes {
     | '/_authenticated/history'
     | '/_authenticated/lab'
     | '/_authenticated/market'
+    | '/_authenticated/optimizer'
+    | '/_authenticated/portfolio'
     | '/_authenticated/positions'
+    | '/_authenticated/shadow'
     | '/_authenticated/signals'
+    | '/_authenticated/strategies'
     | '/_authenticated/accounts/new'
     | '/_authenticated/backtests/$id'
   fileRoutesById: FileRoutesById
@@ -265,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/strategies': {
+      id: '/_authenticated/strategies'
+      path: '/strategies'
+      fullPath: '/strategies'
+      preLoaderRoute: typeof AuthenticatedStrategiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/signals': {
       id: '/_authenticated/signals'
       path: '/signals'
@@ -272,11 +327,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSignalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/shadow': {
+      id: '/_authenticated/shadow'
+      path: '/shadow'
+      fullPath: '/shadow'
+      preLoaderRoute: typeof AuthenticatedShadowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/positions': {
       id: '/_authenticated/positions'
       path: '/positions'
       fullPath: '/positions'
       preLoaderRoute: typeof AuthenticatedPositionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portfolio': {
+      id: '/_authenticated/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/optimizer': {
+      id: '/_authenticated/optimizer'
+      path: '/optimizer'
+      fullPath: '/optimizer'
+      preLoaderRoute: typeof AuthenticatedOptimizerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/market': {
@@ -382,8 +458,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLabRoute: typeof AuthenticatedLabRoute
   AuthenticatedMarketRoute: typeof AuthenticatedMarketRoute
+  AuthenticatedOptimizerRoute: typeof AuthenticatedOptimizerRoute
+  AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedPositionsRoute: typeof AuthenticatedPositionsRoute
+  AuthenticatedShadowRoute: typeof AuthenticatedShadowRoute
   AuthenticatedSignalsRoute: typeof AuthenticatedSignalsRoute
+  AuthenticatedStrategiesRoute: typeof AuthenticatedStrategiesRoute
   AuthenticatedBacktestsIdRoute: typeof AuthenticatedBacktestsIdRoute
 }
 
@@ -397,8 +477,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLabRoute: AuthenticatedLabRoute,
   AuthenticatedMarketRoute: AuthenticatedMarketRoute,
+  AuthenticatedOptimizerRoute: AuthenticatedOptimizerRoute,
+  AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedPositionsRoute: AuthenticatedPositionsRoute,
+  AuthenticatedShadowRoute: AuthenticatedShadowRoute,
   AuthenticatedSignalsRoute: AuthenticatedSignalsRoute,
+  AuthenticatedStrategiesRoute: AuthenticatedStrategiesRoute,
   AuthenticatedBacktestsIdRoute: AuthenticatedBacktestsIdRoute,
 }
 
