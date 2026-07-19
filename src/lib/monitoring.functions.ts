@@ -84,7 +84,7 @@ export const getReadinessScore = createServerFn({ method: "GET" })
 
     const [backtestsR, shadowR, signalsR, strategiesR] = await Promise.all([
       supabase.from("backtest_runs")
-        .select("sharpe_ratio,sortino_ratio,max_drawdown,win_rate,total_trades,profit_factor,run_type,created_at")
+        .select("metrics,kind,created_at")
         .eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
       supabase.from("shadow_trades")
         .select("pnl,pnl_pct,confidence,status,entry_ts,close_ts,market_regime")
@@ -95,24 +95,29 @@ export const getReadinessScore = createServerFn({ method: "GET" })
       supabase.from("strategies").select("health_status,is_active").eq("user_id", userId),
     ]);
 
+    type M = { sharpe?: number; sortino?: number; maxDrawdown?: number; winRate?: number; trades?: number; profitFactor?: number };
+    const btRows = (backtestsR.data ?? []).map(r => ({
+      kind: r.kind as string,
+      metrics: (r.metrics ?? {}) as M,
+    }));
+
     const buckets: Bucket[] = [];
 
     // 1. Backtest quality — best Sharpe of any run.
-    const bts = backtestsR.data ?? [];
-    const bestSharpe = bts.reduce((m, r) => Math.max(m, Number(r.sharpe_ratio ?? 0)), 0);
-    const btTrades = bts.reduce((s, r) => s + Number(r.total_trades ?? 0), 0);
-    const btScore = bts.length === 0 ? 0 : Math.max(0, Math.min(1, bestSharpe / 2));
+    const bestSharpe = btRows.reduce((m, r) => Math.max(m, Number(r.metrics.sharpe ?? 0)), 0);
+    const btTrades = btRows.reduce((s, r) => s + Number(r.metrics.trades ?? 0), 0);
+    const btScore = btRows.length === 0 ? 0 : Math.max(0, Math.min(1, bestSharpe / 2));
     buckets.push({
       label: "Backtest quality",
       score: btScore, weight: 0.18,
-      detail: bts.length === 0
+      detail: btRows.length === 0
         ? "Run a backtest in the Strategy Lab."
-        : `Best Sharpe ${bestSharpe.toFixed(2)} across ${bts.length} run${bts.length===1?"":"s"} (${btTrades} trades).`,
+        : `Best Sharpe ${bestSharpe.toFixed(2)} across ${btRows.length} run${btRows.length===1?"":"s"} (${btTrades} trades).`,
     });
 
     // 2. Walk-forward results — must have at least one walk-forward run.
-    const wf = bts.filter(r => r.run_type === "walk_forward");
-    const wfSharpe = wf.reduce((m, r) => Math.max(m, Number(r.sharpe_ratio ?? 0)), 0);
+    const wf = btRows.filter(r => r.kind === "walk_forward" || r.kind === "wf_child");
+    const wfSharpe = wf.reduce((m, r) => Math.max(m, Number(r.metrics.sharpe ?? 0)), 0);
     const wfScore = wf.length === 0 ? 0 : Math.max(0, Math.min(1, wfSharpe / 1.5));
     buckets.push({
       label: "Walk-forward validation",
@@ -138,7 +143,7 @@ export const getReadinessScore = createServerFn({ method: "GET" })
     });
 
     // 4. Drawdown control — best (lowest magnitude) DD across runs.
-    const dds = bts.map(r => Math.abs(Number(r.max_drawdown ?? 0))).filter(x => x > 0);
+    const dds = btRows.map(r => Math.abs(Number(r.metrics.maxDrawdown ?? 0))).filter(x => x > 0);
     const bestDd = dds.length ? Math.min(...dds) : 1;
     // 5% DD -> 1.0; 30%+ -> 0
     const ddScore = dds.length === 0 ? 0 : Math.max(0, Math.min(1, (0.30 - bestDd) / 0.25));
