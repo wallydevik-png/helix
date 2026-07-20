@@ -171,11 +171,12 @@ export const approveSignalV2 = createServerFn({ method: "POST" })
 
     const qty = data.modifiedQty ?? Number(sig.qty);
     const entry = Number(sig.entry);
+    const side = sig.side as "buy" | "sell";
 
     // Risk gate
     const { evaluateRisk } = await import("@/lib/trading/riskGate.server");
     const decision = await evaluateRisk(supabase, userId, {
-      symbol: sig.symbol, side: sig.side, qty, entry,
+      symbol: sig.symbol, side, qty, entry,
       stopLoss: Number(sig.stop_loss), takeProfit: Number(sig.take_profit),
       confidence: Number(sig.confidence),
     });
@@ -202,7 +203,7 @@ export const approveSignalV2 = createServerFn({ method: "POST" })
     // Submit through the execution engine
     const { submitOrder } = await import("@/lib/execution/engine.server");
     const result = await submitOrder(supabase, userId, {
-      symbol: sig.symbol, side: sig.side, qty,
+      symbol: sig.symbol, side, qty,
       orderType: "market", signalId: data.signalId, live: false,
     });
 
