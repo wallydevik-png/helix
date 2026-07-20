@@ -48,7 +48,7 @@ export const scanConnectionPermissions = createServerFn({ method: "POST" })
     ].filter((x): x is string => x !== null);
 
     await context.supabase.from("exchange_connections").update({
-      permission_scan: scan,
+      permission_scan: scan as unknown as Record<string, never>,
       withdrawal_detected: scan.can_withdraw,
       unnecessary_permissions: unnecessary,
       last_sync_at: new Date().toISOString(),
