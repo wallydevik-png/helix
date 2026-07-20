@@ -150,21 +150,21 @@ function ApprovalCard({
           </button>
         </div>
         <p className="text-sm mt-1">{s.reasoning}</p>
-        {showDetail && s.contributions && (
+        {showDetail && Array.isArray(s.contributions) && (
           <div className="mt-3 space-y-1.5">
-            {(s.contributions ?? []).map((c, i) => (
+            {(s.contributions as Array<{ name: string; direction: string; weight: number }>).map((c, i) => (
               <div key={i} className="flex items-center gap-2 text-xs font-mono">
                 <span className={`w-16 text-right ${
                   c.direction === "bull" ? "text-success" : c.direction === "bear" ? "text-destructive" : "text-muted-foreground"
                 }`}>{c.direction}</span>
                 <span className="flex-1">{c.name}</span>
-                <span className="text-muted-foreground">weight {c.weight.toFixed(2)}</span>
+                <span className="text-muted-foreground">weight {Number(c.weight).toFixed(2)}</span>
               </div>
             ))}
-            {s.risk_factors && s.risk_factors.length > 0 && (
+            {Array.isArray(s.risk_factors) && s.risk_factors.length > 0 && (
               <div className="mt-2 pt-2 border-t border-border">
                 <div className="text-[10px] uppercase font-mono text-warning mb-1">Risk factors</div>
-                {s.risk_factors.map((r, i) => (
+                {(s.risk_factors as string[]).map((r, i) => (
                   <div key={i} className="text-xs text-warning">• {r}</div>
                 ))}
               </div>
