@@ -86,6 +86,10 @@ function Accounts() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Link to="/accounts/$id/activate" params={{ id: c.id }}
+                      className="text-xs px-3 py-1.5 rounded-md border border-primary/40 text-primary hover:bg-primary/10 font-medium whitespace-nowrap">
+                      Manage live trading
+                    </Link>
                     <button onClick={() => disconnect(c.id)}
                       className="p-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40">
                       <Trash2 className="w-4 h-4" />
