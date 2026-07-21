@@ -145,7 +145,7 @@ function ExecutionHealthPanel() {
   const pctFill = (data.orders.fillRate * 100).toFixed(0);
   async function onReconcile(id: string) {
     try { const r = await rec({ data: { connectionId: id } });
-      toast.success(`Reconciled ${r.reconciled ?? 0} orders`); refetch();
+      toast.success(`Reconciled ${r.updated} of ${r.scanned} orders`); refetch();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
   return (
