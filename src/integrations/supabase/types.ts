@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_request_log: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          is_signed: boolean
+          latency_ms: number | null
+          method: string
+          order_id: string | null
+          path: string
+          request_params: Json
+          response_snippet: string | null
+          status_code: number | null
+          user_id: string
+          venue: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          is_signed?: boolean
+          latency_ms?: number | null
+          method: string
+          order_id?: string | null
+          path: string
+          request_params?: Json
+          response_snippet?: string | null
+          status_code?: number | null
+          user_id: string
+          venue: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          is_signed?: boolean
+          latency_ms?: number | null
+          method?: string
+          order_id?: string | null
+          path?: string
+          request_params?: Json
+          response_snippet?: string | null
+          status_code?: number | null
+          user_id?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_request_log_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_request_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -246,6 +312,7 @@ export type Database = {
       }
       exchange_connections: {
         Row: {
+          clock_skew_ms: number | null
           connector_id: string
           created_at: string
           credential_ciphertext: string | null
@@ -253,6 +320,7 @@ export type Database = {
           id: string
           label: string
           last_error: string | null
+          last_reconcile_at: string | null
           last_sync_at: string | null
           max_notional_per_order: number | null
           permission_scan: Json | null
@@ -266,6 +334,7 @@ export type Database = {
           withdrawal_detected: boolean
         }
         Insert: {
+          clock_skew_ms?: number | null
           connector_id: string
           created_at?: string
           credential_ciphertext?: string | null
@@ -273,6 +342,7 @@ export type Database = {
           id?: string
           label: string
           last_error?: string | null
+          last_reconcile_at?: string | null
           last_sync_at?: string | null
           max_notional_per_order?: number | null
           permission_scan?: Json | null
@@ -286,6 +356,7 @@ export type Database = {
           withdrawal_detected?: boolean
         }
         Update: {
+          clock_skew_ms?: number | null
           connector_id?: string
           created_at?: string
           credential_ciphertext?: string | null
@@ -293,6 +364,7 @@ export type Database = {
           id?: string
           label?: string
           last_error?: string | null
+          last_reconcile_at?: string | null
           last_sync_at?: string | null
           max_notional_per_order?: number | null
           permission_scan?: Json | null
@@ -456,6 +528,7 @@ export type Database = {
       orders: {
         Row: {
           account_id: string
+          client_order_id: string | null
           created_at: string
           error_message: string | null
           execution_venue: string
@@ -475,12 +548,14 @@ export type Database = {
           slippage_bps: number | null
           status: string
           stop_price: number | null
+          submitted_at: string | null
           symbol: string
           trailing_stop_pct: number | null
           user_id: string
         }
         Insert: {
           account_id: string
+          client_order_id?: string | null
           created_at?: string
           error_message?: string | null
           execution_venue?: string
@@ -500,12 +575,14 @@ export type Database = {
           slippage_bps?: number | null
           status?: string
           stop_price?: number | null
+          submitted_at?: string | null
           symbol: string
           trailing_stop_pct?: number | null
           user_id: string
         }
         Update: {
           account_id?: string
+          client_order_id?: string | null
           created_at?: string
           error_message?: string | null
           execution_venue?: string
@@ -525,6 +602,7 @@ export type Database = {
           slippage_bps?: number | null
           status?: string
           stop_price?: number | null
+          submitted_at?: string | null
           symbol?: string
           trailing_stop_pct?: number | null
           user_id?: string
