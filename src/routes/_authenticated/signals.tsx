@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader, fmtUsd, fmtNum } from "@/components/AppShell";
-import { generateAndRouteSignal, listSignals, evaluateSignalOutcomes } from "@/lib/trading.functions";
+import { generateAndRouteSignal, listSignals, evaluateSignalOutcomes, approveSignal, rejectSignal } from "@/lib/trading.functions";
 import { toast } from "sonner";
-import { Sparkles, TrendingUp, TrendingDown, ChevronDown, ChevronUp, AlertTriangle, RefreshCw } from "lucide-react";
+import { Sparkles, TrendingUp, TrendingDown, ChevronDown, ChevronUp, AlertTriangle, RefreshCw, Check, X, Zap } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/signals")({
@@ -18,6 +18,8 @@ function Signals() {
   const fetchFn = useServerFn(listSignals);
   const genFn = useServerFn(generateAndRouteSignal);
   const evalFn = useServerFn(evaluateSignalOutcomes);
+  const approveFn = useServerFn(approveSignal);
+  const rejectFn = useServerFn(rejectSignal);
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ["signals"], queryFn: () => fetchFn(), refetchInterval: 15000 });
 
@@ -29,6 +31,16 @@ function Signals() {
     try { const r = await evalFn(); toast.success(`Evaluated ${r.evaluated} past signals`); qc.invalidateQueries(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
+  async function approveOne(id: string) {
+    try { await approveFn({ data: { signalId: id } }); toast.success("Signal executed on paper account"); qc.invalidateQueries(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  }
+  async function rejectOne(id: string) {
+    try { await rejectFn({ data: { signalId: id } }); toast.success("Signal rejected"); qc.invalidateQueries(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  }
+
+  const pendingCount = data.filter(s => s.status === "pending").length;
 
   return (
     <AppShell>
@@ -49,13 +61,23 @@ function Signals() {
         }
       />
 
+      {pendingCount > 0 && (
+        <Link to="/approvals" className="mb-3 flex items-center justify-between panel px-4 py-3 hover:bg-secondary/40">
+          <div className="flex items-center gap-2 text-sm">
+            <Zap className="w-4 h-4 text-warning" />
+            <b>{pendingCount}</b> pending signal{pendingCount === 1 ? "" : "s"} — route to a live exchange
+          </div>
+          <span className="text-xs text-primary">Open approvals →</span>
+        </Link>
+      )}
+
       {data.length === 0 ? (
         <div className="panel p-10 text-center text-muted-foreground text-sm">
           No signals yet. Use the market scanner or generate one to see the AI reasoning breakdown.
         </div>
       ) : (
         <div className="space-y-3">
-          {data.map(s => <SignalCard key={s.id} s={s} />)}
+          {data.map(s => <SignalCard key={s.id} s={s} onApprove={approveOne} onReject={rejectOne} />)}
         </div>
       )}
     </AppShell>
@@ -64,7 +86,7 @@ function Signals() {
 
 type SignalRow = Awaited<ReturnType<ReturnType<typeof useServerFn<typeof listSignals>>>>[number];
 
-function SignalCard({ s }: { s: SignalRow }) {
+function SignalCard({ s, onApprove, onReject }: { s: SignalRow; onApprove: (id: string) => void; onReject: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const contribs = (s.contributions as unknown as Contribution[]) ?? [];
   const risks = (s.risk_factors as unknown as string[]) ?? [];
@@ -105,6 +127,23 @@ function SignalCard({ s }: { s: SignalRow }) {
         <Stat k="R:R" v={fmtNum(s.risk_reward, 2)} />
         <Stat k="Confidence" v={(conf * 100).toFixed(0) + "%"} tone={conf > 0.75 ? "pos" : undefined} />
       </div>
+
+      {s.status === "pending" && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <button onClick={() => onApprove(s.id)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-success text-success-foreground px-3 py-1.5 text-xs font-medium">
+            <Check className="w-3.5 h-3.5" /> Approve on paper
+          </button>
+          <Link to="/approvals"
+            className="inline-flex items-center gap-1.5 rounded-md bg-warning text-warning-foreground px-3 py-1.5 text-xs font-medium">
+            <Zap className="w-3.5 h-3.5" /> Route to live exchange
+          </Link>
+          <button onClick={() => onReject(s.id)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-destructive hover:text-destructive-foreground hover:border-destructive ml-auto">
+            <X className="w-3.5 h-3.5" /> Reject
+          </button>
+        </div>
+      )}
 
       <button onClick={() => setOpen(!open)}
         className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline">

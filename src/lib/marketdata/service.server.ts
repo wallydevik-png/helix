@@ -3,9 +3,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Candle, Interval, MarketDataProvider } from "./types";
 import { createSyntheticProvider } from "./synthetic.server";
+import { createBybitMarketDataProvider } from "./bybit.server";
 import { listSupportedSymbols as listSymbols } from "./symbols";
 
-const providers: MarketDataProvider[] = [createSyntheticProvider()];
+// Order matters — first provider that .supports() the symbol wins.
+// Bybit covers all "-USD" crypto pairs with live public data; the synthetic
+// provider is the fallback for stocks and anything Bybit does not list.
+const providers: MarketDataProvider[] = [
+  createBybitMarketDataProvider(),
+  createSyntheticProvider(),
+];
 
 export function listSupportedSymbols(): string[] {
   return listSymbols();

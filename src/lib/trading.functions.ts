@@ -303,15 +303,17 @@ export const generateAndRouteSignal = createServerFn({ method: "POST" })
       ? await analyzeSymbol(supabase, data.symbol)
       : (await scanMarket(supabase, universe))[0];
     if (!sig) throw new Error("No signal produced");
+    if (sig.direction === "wait") {
+      throw new Error(`No high-conviction setup on ${sig.symbol} right now (${sig.regimeLabel}). Try another symbol or wait for the market to develop.`);
+    }
 
-    const status = sig.direction === "wait" ? "expired" : "pending";
     const { data: inserted, error } = await supabase.from("signals").insert({
       user_id: userId,
       symbol: sig.symbol, side: sig.side,
       entry: sig.entry, stop_loss: sig.stopLoss, take_profit: sig.takeProfit,
       qty: sig.qty, confidence: sig.confidence, reasoning: sig.reasoning,
-      risk_reward: sig.riskReward, status,
-      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      risk_reward: sig.riskReward, status: "pending",
+      expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
       time_horizon: sig.timeHorizon, risk_level: sig.riskLevel,
       market_regime: sig.regime,
       indicators: sig.indicators as unknown as Record<string, never>,
@@ -320,7 +322,7 @@ export const generateAndRouteSignal = createServerFn({ method: "POST" })
     }).select().single();
     if (error) throw error;
 
-    if (settings.mode === "autonomous" && sig.direction !== "wait") {
+    if (settings.mode === "autonomous") {
       await executeSignalInternal(supabase, userId, inserted.id);
     }
     return inserted;
