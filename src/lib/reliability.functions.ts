@@ -237,7 +237,7 @@ export const runReconcile = createServerFn({ method: "POST" })
       .order("captured_at", { ascending: false }).limit(1).maybeSingle();
 
     const { data: currentPos } = await supabase
-      .from("positions").select("id,symbol,status,quantity").eq("user_id", userId).eq("status", "open").limit(500);
+      .from("positions").select("id,symbol,status,qty").eq("user_id", userId).eq("status", "open").limit(500);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const snapshotPositions: any[] = (latestPos?.payload as { positions?: unknown[] } | null)?.positions as any[] ?? [];
