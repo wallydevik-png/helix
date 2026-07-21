@@ -93,7 +93,6 @@ function AssistantPage() {
       <PageHeader
         title="Personal Assistant"
         subtitle="Ask NeurlX anything about your trades, signals, or platform features."
-        icon={<Sparkles className="h-5 w-5" />}
       />
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[500px]">
         {/* Sidebar */}
