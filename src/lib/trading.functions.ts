@@ -557,7 +557,7 @@ export const scanConnectionHealth = createServerFn({ method: "POST" })
     const t0 = Date.now();
     let ok = true;
     let message = "";
-    let permissions: Record<string, unknown> = {};
+    let permissions: Record<string, boolean> = {};
     try {
       if (connector.checkHealth) {
         const h = await connector.checkHealth();
