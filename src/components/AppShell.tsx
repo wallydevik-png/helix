@@ -33,6 +33,7 @@ const NAV = [
   { to: "/intel", label: "Market Intelligence", icon: Radar },
   { to: "/altdata", label: "Alternative Data", icon: Layers3 },
   { to: "/research", label: "Research Lab", icon: FlaskConical },
+  { to: "/multi-asset", label: "Multi-Asset", icon: Globe },
   { to: "/accounts", label: "Connected Accounts", icon: Plug },
   { to: "/signals", label: "AI Signals", icon: Signal },
   { to: "/approvals", label: "Approvals", icon: CheckSquare },
