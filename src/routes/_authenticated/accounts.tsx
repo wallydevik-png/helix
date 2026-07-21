@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { disconnectConnection, listConnections, setPermissions } from "@/lib/trading.functions";
-import { getConnectorDescriptor } from "@/lib/connectors/registry";
-import { Plus, Trash2, Shield, ShieldCheck } from "lucide-react";
+import { disconnectConnection, listConnections, setPermissions, scanConnectionHealth } from "@/lib/trading.functions";
+import { getBroker } from "@/lib/connectors/brokerRegistry";
+import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/accounts")({
   head: () => ({ meta: [{ title: "Connected Accounts — NeurlX" }, { name: "robots", content: "noindex" }] }),
