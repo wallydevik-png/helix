@@ -146,10 +146,17 @@ export const listCopySubscriptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("copy_subscriptions")
-      .select("*,public_profiles!copy_subscriptions_leader_id_fkey(display_name,avatar_url,verified)")
-      .eq("follower_id", context.userId).order("created_at", { ascending: false });
+      .select("*").eq("follower_id", context.userId).order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { subscriptions: data ?? [] };
+    const ids = (data ?? []).map((r: any) => r.leader_id);
+    const profMap = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await context.supabase.from("public_profiles")
+        .select("user_id,display_name,avatar_url,verified").in("user_id", ids);
+      for (const p of profs ?? []) profMap.set(p.user_id, p);
+    }
+    const subscriptions = (data ?? []).map((r: any) => ({ ...r, public_profiles: profMap.get(r.leader_id) }));
+    return { subscriptions };
   });
 
 export const upsertCopySubscription = createServerFn({ method: "POST" })
