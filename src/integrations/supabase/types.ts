@@ -585,6 +585,87 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          channels: Json
+          created_at: string
+          discord_webhook_url: string | null
+          email_address: string | null
+          kind_toggles: Json
+          quiet_hours_end: number | null
+          quiet_hours_start: number | null
+          severity_min: string
+          telegram_chat_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channels?: Json
+          created_at?: string
+          discord_webhook_url?: string | null
+          email_address?: string | null
+          kind_toggles?: Json
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          severity_min?: string
+          telegram_chat_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channels?: Json
+          created_at?: string
+          discord_webhook_url?: string | null
+          email_address?: string | null
+          kind_toggles?: Json
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          severity_min?: string
+          telegram_chat_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          channels_delivered: string[]
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          payload: Json
+          read_at: string | null
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          channels_delivered?: string[]
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          payload?: Json
+          read_at?: string | null
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          channels_delivered?: string[]
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          payload?: Json
+          read_at?: string | null
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       optimization_runs: {
         Row: {
           bars: number
