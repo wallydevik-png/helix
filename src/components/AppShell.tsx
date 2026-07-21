@@ -82,7 +82,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
   async function toggleKill() {
     try {
+      if (killActive && hasCredentials) {
+        await authenticate();
+      }
       await kill({ data: { active: !killActive } });
+      vibrate(killActive ? [30] : [60, 30]);
       toast.success(killActive ? "Kill switch deactivated" : "Kill switch ACTIVE — all automation halted");
       qc.invalidateQueries();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
