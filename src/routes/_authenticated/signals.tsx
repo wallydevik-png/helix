@@ -128,6 +128,23 @@ function SignalCard({ s, onApprove, onReject }: { s: SignalRow; onApprove: (id: 
         <Stat k="Confidence" v={(conf * 100).toFixed(0) + "%"} tone={conf > 0.75 ? "pos" : undefined} />
       </div>
 
+      {s.status === "pending" && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <button onClick={() => onApprove(s.id)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-success text-success-foreground px-3 py-1.5 text-xs font-medium">
+            <Check className="w-3.5 h-3.5" /> Approve on paper
+          </button>
+          <Link to="/approvals"
+            className="inline-flex items-center gap-1.5 rounded-md bg-warning text-warning-foreground px-3 py-1.5 text-xs font-medium">
+            <Zap className="w-3.5 h-3.5" /> Route to live exchange
+          </Link>
+          <button onClick={() => onReject(s.id)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-destructive hover:text-destructive-foreground hover:border-destructive ml-auto">
+            <X className="w-3.5 h-3.5" /> Reject
+          </button>
+        </div>
+      )}
+
       <button onClick={() => setOpen(!open)}
         className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
         {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
