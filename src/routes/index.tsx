@@ -5,19 +5,29 @@ import { useTheme } from "@/hooks/useTheme";
 import { usePWA } from "@/hooks/usePWA";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "NeurlX — AI Paper Trading Platform" },
+      { name: "description", content: "Secure AI trading terminal with paper trading, explainable signals, broker connections, and risk-gated execution controls." },
+      { property: "og:title", content: "NeurlX — AI Paper Trading Platform" },
+      { property: "og:description", content: "Practice and validate AI trading strategies with encrypted connections, audit trails, and layered risk controls." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Landing,
 });
 
 function Landing() {
   const { theme, toggle } = useTheme();
-  const { installPrompt, isInstalled, install } = usePWA();
+  const { canInstall, install } = usePWA();
   return (
     <div className="min-h-screen">
       <header className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <Logo size="md" showTagline />
           <div className="flex items-center gap-2">
-            {installPrompt && !isInstalled && (
+            {canInstall && (
               <button onClick={install} className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-primary/40 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/10">
                 <Download className="w-4 h-4" /> Install app
               </button>

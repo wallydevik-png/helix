@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
 import {
   registrationOptions,
   verifyRegistration,
@@ -28,6 +27,7 @@ export function useBiometric() {
       if (!isSupported) throw new Error("Biometric authentication is not supported on this device.");
       const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       if (!available) throw new Error("No biometric authenticator found.");
+      const { startRegistration } = await import("@simplewebauthn/browser");
       const options = await opts();
       const response = await startRegistration({ optionsJSON: options as never });
       const result = await verifyReg({ data: { response, nickname } });
@@ -46,6 +46,7 @@ export function useBiometric() {
     setError(null);
     try {
       if (!isSupported) throw new Error("Biometric authentication is not available.");
+      const { startAuthentication } = await import("@simplewebauthn/browser");
       const options = await authOpts();
       const response = await startAuthentication({ optionsJSON: options as never });
       const result = await verifyAuth({ data: { response } });
