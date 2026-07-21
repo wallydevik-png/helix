@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader, fmtUsd, fmtNum } from "@/components/AppShell";
 import { listSignals, rejectSignal } from "@/lib/trading.functions";
-import { approveSignalV2 } from "@/lib/assistedLive.functions";
+import { approveSignalV2, listLiveConnections } from "@/lib/assistedLive.functions";
 import { toast } from "sonner";
-import { Check, X, Sliders } from "lucide-react";
+import { Check, X, Sliders, Zap } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
@@ -13,43 +13,48 @@ export const Route = createFileRoute("/_authenticated/approvals")({
   component: Approvals,
 });
 
-const FEE_BPS = 10; // 0.10% paper fee — kept in sync with the paper connector
+const FEE_BPS = 10;
+
+interface LiveConn { id: string; label: string; connector_id: string; max_notional_per_order: number | string | null }
 
 function Approvals() {
   const fetchFn = useServerFn(listSignals);
   const approve = useServerFn(approveSignalV2);
   const reject = useServerFn(rejectSignal);
+  const listConns = useServerFn(listLiveConnections);
   const qc = useQueryClient();
 
   const { data: all = [] } = useQuery({
     queryKey: ["signals"], queryFn: () => fetchFn(), refetchInterval: 10000,
   });
+  const { data: liveConns = [] } = useQuery({
+    queryKey: ["live-connections"], queryFn: () => listConns(),
+  });
   const pending = all.filter(s => s.status === "pending");
 
-  async function onApprove(id: string, modifiedQty?: number) {
+  async function onApprove(id: string, modifiedQty?: number, live?: { connectionId: string }) {
     try {
-      const r = await approve({ data: { signalId: id, modifiedQty } });
-      toast.success(r.partial
+      const r = await approve({ data: {
+        signalId: id, modifiedQty,
+        live: !!live, connectionId: live?.connectionId,
+      } });
+      toast.success((r.isLive ? "LIVE " : "") + (r.partial
         ? `Partial fill @ ${fmtUsd(r.filledPrice)} (${fmtNum(r.filledQty, 6)})`
-        : `Filled @ ${fmtUsd(r.filledPrice)}`);
+        : `Filled @ ${fmtUsd(r.filledPrice)}`));
       qc.invalidateQueries();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Rejected by risk gate"); }
   }
   async function onReject(id: string) {
     try {
       await reject({ data: { signalId: id } });
-      toast.success("Signal rejected");
-      qc.invalidateQueries();
+      toast.success("Signal rejected"); qc.invalidateQueries();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
 
   return (
     <AppShell>
-      <PageHeader
-        title="Assisted Trade Approvals"
-        subtitle="Every AI-proposed trade requires your explicit approval. You can adjust position size before approving."
-      />
-
+      <PageHeader title="Assisted Trade Approvals"
+        subtitle="Every AI trade requires explicit approval. Approve to paper by default, or route to a live exchange." />
       {pending.length === 0 ? (
         <div className="panel p-10 text-center text-muted-foreground text-sm">
           No pending approvals. Generate a signal from the AI Signals page.
@@ -57,7 +62,8 @@ function Approvals() {
       ) : (
         <div className="space-y-4">
           {pending.map(s => (
-            <ApprovalCard key={s.id} signal={s} onApprove={onApprove} onReject={onReject} />
+            <ApprovalCard key={s.id} signal={s} liveConns={liveConns as LiveConn[]}
+              onApprove={onApprove} onReject={onReject} />
           ))}
         </div>
       )}
