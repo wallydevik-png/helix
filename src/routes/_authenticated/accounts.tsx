@@ -2,9 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { disconnectConnection, listConnections, setPermissions, scanConnectionHealth } from "@/lib/trading.functions";
+import {
+  disconnectConnection, listConnections, setPermissions,
+  scanConnectionHealth, runConnectorTests,
+} from "@/lib/trading.functions";
 import { getBroker } from "@/lib/connectors/brokerRegistry";
-import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle } from "lucide-react";
+import { capabilityBadges, getCapabilities } from "@/lib/connectors/capabilities";
+import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle, TestTube2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
