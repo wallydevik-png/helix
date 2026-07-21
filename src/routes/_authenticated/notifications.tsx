@@ -10,9 +10,11 @@ import {
 import { toast } from "sonner";
 import { Bell, Check, CheckCheck } from "lucide-react";
 
-const notifsQO = (fetcher: () => Promise<unknown>) => queryOptions({
+type NotifData = { notifications: Notif[]; unread: number; preferences: Prefs | null };
+
+const notifsQO = (fetcher: () => Promise<NotifData>) => queryOptions({
   queryKey: ["notifications"],
-  queryFn: fetcher as never,
+  queryFn: fetcher,
   refetchInterval: 15000,
 });
 

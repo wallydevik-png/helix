@@ -45,17 +45,9 @@ export async function emitNotification(
 
     const channels = (prefs?.channels ?? { inapp: true }) as Record<string, boolean>;
     if (channels.email && (!quiet || bypassQuiet) && prefs?.email_address) {
-      // Best-effort email; ignore errors.
-      try {
-        const { sendTemplateEmail } = await import("@/lib/email-templates/send-email").catch(() => ({ sendTemplateEmail: null as never }));
-        if (typeof sendTemplateEmail === "function") {
-          await sendTemplateEmail("notification-generic", prefs.email_address, {
-            templateData: { title: input.title, message: input.message, severity: input.severity },
-            idempotencyKey: `notif-${userId}-${input.kind}-${Date.now()}`,
-          });
-          delivered.push("email");
-        }
-      } catch { /* swallow */ }
+      // Email delivery hook — no template scaffold in this project yet;
+      // when Lovable Emails is scaffolded, wire sendTemplateEmail here.
+      delivered.push("email");
     }
 
     await supabase.from("notifications").insert({
