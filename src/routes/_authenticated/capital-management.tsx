@@ -66,15 +66,14 @@ function CapitalMgmtPage() {
     <AppShell>
       <PageHeader
         title="Capital Management"
-        description="Deposits, withdrawals, allocations, reserves, and compounding rules."
-        icon={Banknote}
+        subtitle="Deposits, withdrawals, allocations, reserves, and compounding rules."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Metric label="Net Contributed" value={fmtUsd(t.netContributed)} />
-        <Metric label="Total P&L (net of fees)" value={fmtUsd(t.totalPnl)} tone={t.totalPnl >= 0 ? "positive" : "negative"} />
+        <Metric label="Total P&L (net of fees)" value={fmtUsd(t.totalPnl)} tone={t.totalPnl >= 0 ? "pos" : "neg"} />
         <Metric label="Current Equity" value={fmtUsd(t.latestEquity)} />
-        <Metric label="30-Snap Change" value={`${t.equityChangePct.toFixed(2)}%`} tone={t.equityChangePct >= 0 ? "positive" : "negative"} />
+        <Metric label="30-Snap Change" value={`${t.equityChangePct.toFixed(2)}%`} tone={t.equityChangePct >= 0 ? "pos" : "neg"} />
       </div>
 
       <Card className="mt-4 p-4">
