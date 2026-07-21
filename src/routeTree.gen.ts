@@ -48,7 +48,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAltdataRouteImport } from './routes/_authenticated/altdata'
 import { Route as AuthenticatedAccuracyRouteImport } from './routes/_authenticated/accuracy'
-import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated/accounts.index'
 import { Route as AuthenticatedBacktestsIdRouteImport } from './routes/_authenticated/backtests.$id'
 import { Route as AuthenticatedAccountsNewRouteImport } from './routes/_authenticated/accounts.new'
 import { Route as ApiPublicCronAutonomousRouteImport } from './routes/api/public/cron.autonomous'
@@ -253,11 +253,12 @@ const AuthenticatedAccuracyRoute = AuthenticatedAccuracyRouteImport.update({
   path: '/accuracy',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedAccountsIndexRoute =
+  AuthenticatedAccountsIndexRouteImport.update({
+    id: '/accounts/',
+    path: '/accounts/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBacktestsIdRoute =
   AuthenticatedBacktestsIdRouteImport.update({
     id: '/backtests/$id',
@@ -266,9 +267,9 @@ const AuthenticatedBacktestsIdRoute =
   } as any)
 const AuthenticatedAccountsNewRoute =
   AuthenticatedAccountsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedAccountsRoute,
+    id: '/accounts/new',
+    path: '/accounts/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicCronAutonomousRoute = ApiPublicCronAutonomousRouteImport.update({
   id: '/api/public/cron/autonomous',
@@ -277,16 +278,15 @@ const ApiPublicCronAutonomousRoute = ApiPublicCronAutonomousRouteImport.update({
 } as any)
 const AuthenticatedAccountsIdActivateRoute =
   AuthenticatedAccountsIdActivateRouteImport.update({
-    id: '/$id/activate',
-    path: '/$id/activate',
-    getParentRoute: () => AuthenticatedAccountsRoute,
+    id: '/accounts/$id/activate',
+    path: '/accounts/$id/activate',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/accounts': typeof AuthenticatedAccountsRouteWithChildren
   '/accuracy': typeof AuthenticatedAccuracyRoute
   '/altdata': typeof AuthenticatedAltdataRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -324,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/validation': typeof AuthenticatedValidationRoute
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
+  '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
   '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
@@ -331,7 +332,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/accounts': typeof AuthenticatedAccountsRouteWithChildren
   '/accuracy': typeof AuthenticatedAccuracyRoute
   '/altdata': typeof AuthenticatedAltdataRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -369,6 +369,7 @@ export interface FileRoutesByTo {
   '/validation': typeof AuthenticatedValidationRoute
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
+  '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
   '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
@@ -378,7 +379,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/accounts': typeof AuthenticatedAccountsRouteWithChildren
   '/_authenticated/accuracy': typeof AuthenticatedAccuracyRoute
   '/_authenticated/altdata': typeof AuthenticatedAltdataRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -416,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/validation': typeof AuthenticatedValidationRoute
   '/_authenticated/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/_authenticated/backtests/$id': typeof AuthenticatedBacktestsIdRoute
+  '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
   '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
@@ -425,7 +426,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
-    | '/accounts'
     | '/accuracy'
     | '/altdata'
     | '/analytics'
@@ -463,6 +463,7 @@ export interface FileRouteTypes {
     | '/validation'
     | '/accounts/new'
     | '/backtests/$id'
+    | '/accounts/'
     | '/accounts/$id/activate'
     | '/api/public/cron/autonomous'
   fileRoutesByTo: FileRoutesByTo
@@ -470,7 +471,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
-    | '/accounts'
     | '/accuracy'
     | '/altdata'
     | '/analytics'
@@ -508,6 +508,7 @@ export interface FileRouteTypes {
     | '/validation'
     | '/accounts/new'
     | '/backtests/$id'
+    | '/accounts'
     | '/accounts/$id/activate'
     | '/api/public/cron/autonomous'
   id:
@@ -516,7 +517,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
-    | '/_authenticated/accounts'
     | '/_authenticated/accuracy'
     | '/_authenticated/altdata'
     | '/_authenticated/analytics'
@@ -554,6 +554,7 @@ export interface FileRouteTypes {
     | '/_authenticated/validation'
     | '/_authenticated/accounts/new'
     | '/_authenticated/backtests/$id'
+    | '/_authenticated/accounts/'
     | '/_authenticated/accounts/$id/activate'
     | '/api/public/cron/autonomous'
   fileRoutesById: FileRoutesById
@@ -841,11 +842,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccuracyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/accounts': {
-      id: '/_authenticated/accounts'
+    '/_authenticated/accounts/': {
+      id: '/_authenticated/accounts/'
       path: '/accounts'
-      fullPath: '/accounts'
-      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/backtests/$id': {
@@ -857,10 +858,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/accounts/new': {
       id: '/_authenticated/accounts/new'
-      path: '/new'
+      path: '/accounts/new'
       fullPath: '/accounts/new'
       preLoaderRoute: typeof AuthenticatedAccountsNewRouteImport
-      parentRoute: typeof AuthenticatedAccountsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/cron/autonomous': {
       id: '/api/public/cron/autonomous'
@@ -871,31 +872,15 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/accounts/$id/activate': {
       id: '/_authenticated/accounts/$id/activate'
-      path: '/$id/activate'
+      path: '/accounts/$id/activate'
       fullPath: '/accounts/$id/activate'
       preLoaderRoute: typeof AuthenticatedAccountsIdActivateRouteImport
-      parentRoute: typeof AuthenticatedAccountsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface AuthenticatedAccountsRouteChildren {
-  AuthenticatedAccountsNewRoute: typeof AuthenticatedAccountsNewRoute
-  AuthenticatedAccountsIdActivateRoute: typeof AuthenticatedAccountsIdActivateRoute
-}
-
-const AuthenticatedAccountsRouteChildren: AuthenticatedAccountsRouteChildren = {
-  AuthenticatedAccountsNewRoute: AuthenticatedAccountsNewRoute,
-  AuthenticatedAccountsIdActivateRoute: AuthenticatedAccountsIdActivateRoute,
-}
-
-const AuthenticatedAccountsRouteWithChildren =
-  AuthenticatedAccountsRoute._addFileChildren(
-    AuthenticatedAccountsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRouteWithChildren
   AuthenticatedAccuracyRoute: typeof AuthenticatedAccuracyRoute
   AuthenticatedAltdataRoute: typeof AuthenticatedAltdataRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
@@ -931,11 +916,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSignalsRoute: typeof AuthenticatedSignalsRoute
   AuthenticatedStrategiesRoute: typeof AuthenticatedStrategiesRoute
   AuthenticatedValidationRoute: typeof AuthenticatedValidationRoute
+  AuthenticatedAccountsNewRoute: typeof AuthenticatedAccountsNewRoute
   AuthenticatedBacktestsIdRoute: typeof AuthenticatedBacktestsIdRoute
+  AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
+  AuthenticatedAccountsIdActivateRoute: typeof AuthenticatedAccountsIdActivateRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAccountsRoute: AuthenticatedAccountsRouteWithChildren,
   AuthenticatedAccuracyRoute: AuthenticatedAccuracyRoute,
   AuthenticatedAltdataRoute: AuthenticatedAltdataRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
@@ -971,7 +958,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSignalsRoute: AuthenticatedSignalsRoute,
   AuthenticatedStrategiesRoute: AuthenticatedStrategiesRoute,
   AuthenticatedValidationRoute: AuthenticatedValidationRoute,
+  AuthenticatedAccountsNewRoute: AuthenticatedAccountsNewRoute,
   AuthenticatedBacktestsIdRoute: AuthenticatedBacktestsIdRoute,
+  AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
+  AuthenticatedAccountsIdActivateRoute: AuthenticatedAccountsIdActivateRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -987,13 +977,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

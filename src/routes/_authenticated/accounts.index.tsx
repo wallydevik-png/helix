@@ -12,7 +12,7 @@ import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle, TestTube2, 
 import { toast } from "sonner";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/accounts")({
+export const Route = createFileRoute("/_authenticated/accounts/")({
   head: () => ({ meta: [{ title: "Connected Accounts — NeurlX" }, { name: "robots", content: "noindex" }] }),
   component: Accounts,
 });
