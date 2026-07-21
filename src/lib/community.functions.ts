@@ -43,7 +43,7 @@ export const refreshMyStats = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const [acctR, closedR, followersR] = await Promise.all([
-      supabase.from("paper_accounts").select("balance,equity").eq("user_id", userId).maybeSingle(),
+      supabase.from("paper_accounts").select("cash_balance,equity").eq("user_id", userId).maybeSingle(),
       supabase.from("positions").select("realized_pnl,closed_at").eq("user_id", userId).eq("status", "closed"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", userId),
     ]);
@@ -52,7 +52,7 @@ export const refreshMyStats = createServerFn({ method: "POST" })
     const wins = returns.filter(r => r > 0).length;
     const winRate = returns.length ? wins / returns.length : 0;
     const total = returns.reduce((s, r) => s + r, 0);
-    const startBal = Number(acctR.data?.balance ?? 10000) - total;
+    const startBal = Number(acctR.data?.cash_balance ?? 10000) - total;
     const totalReturnPct = startBal > 0 ? (total / startBal) * 100 : 0;
     // Sharpe (rough, using per-trade returns as proxy)
     const mean = returns.length ? total / returns.length : 0;
