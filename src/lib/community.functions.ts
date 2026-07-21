@@ -93,15 +93,25 @@ export const getLeaderboard = createServerFn({ method: "GET" })
       : data.sort === "sharpe" ? "sharpe"
       : data.sort === "winRate" ? "win_rate"
       : "followers_count";
-    const { data: rows, error } = await context.supabase
+    const { data: statsRows, error } = await context.supabase
       .from("profile_stats")
-      .select("user_id,total_return_pct,win_rate,sharpe,max_drawdown_pct,trades_count,followers_count,public_profiles!inner(display_name,avatar_url,bio,verified,allow_copy,is_public)")
+      .select("user_id,total_return_pct,win_rate,sharpe,max_drawdown_pct,trades_count,followers_count")
       .gte("trades_count", data.minTrades)
-      .eq("public_profiles.is_public", true)
       .order(col, { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return { leaders: rows ?? [] };
+    const ids = (statsRows ?? []).map(r => r.user_id);
+    if (ids.length === 0) return { leaders: [] };
+    const { data: profileRows } = await context.supabase
+      .from("public_profiles")
+      .select("user_id,display_name,avatar_url,bio,verified,allow_copy,is_public")
+      .in("user_id", ids)
+      .eq("is_public", true);
+    const profMap = new Map((profileRows ?? []).map(p => [p.user_id, p]));
+    const leaders = (statsRows ?? [])
+      .filter(r => profMap.has(r.user_id))
+      .map(r => ({ ...r, public_profiles: profMap.get(r.user_id) }));
+    return { leaders };
   });
 
 // ---- Follows ----
