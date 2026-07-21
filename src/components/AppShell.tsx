@@ -8,12 +8,14 @@ import {
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
   Sparkles, Wallet, Bot, Bell, Rocket, ScrollText, Smartphone, Fingerprint, WifiOff,
+  Sun, Moon,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { listCredentials } from "@/lib/webauthn.functions";
 import { usePWA, vibrate } from "@/hooks/usePWA";
 import { useBiometric } from "@/hooks/useBiometric";
+import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
 const NAV = [
