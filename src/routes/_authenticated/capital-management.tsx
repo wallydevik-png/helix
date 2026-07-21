@@ -49,7 +49,7 @@ function CapitalMgmtPage() {
     onError: (e: Error) => toast.error(e.message),
   });
   const policyMut = useMutation({
-    mutationFn: (p: Parameters<typeof policyFn>[0]["data"]) => policyFn({ data: p }),
+    mutationFn: (p: any) => policyFn({ data: p }),
     onSuccess: () => { toast.success("Policy saved"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
