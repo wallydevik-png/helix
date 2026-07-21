@@ -263,3 +263,28 @@ function ScanButton({ id }: { id: string }) {
     </button>
   );
 }
+
+function TestButton({ id }: { id: string }) {
+  const testFn = useServerFn(runConnectorTests);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try {
+      const r = await testFn({ data: { id } });
+      toast[r.overallOk ? "success" : "error"](
+        `Test suite ${r.overallOk ? "passed" : "failed"} · ${r.passed}/${r.passed + r.failed} checks`,
+      );
+      qc.invalidateQueries({ queryKey: ["connections"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Test suite failed");
+    } finally { setBusy(false); }
+  }
+  return (
+    <button onClick={run} disabled={busy}
+      title="Run the connector test suite (auth, market data, sync, permissions)"
+      className="p-2 rounded-md border border-border text-muted-foreground hover:text-primary hover:border-primary/40 disabled:opacity-50">
+      <TestTube2 className={`w-4 h-4 ${busy ? "animate-pulse" : ""}`} />
+    </button>
+  );
+}
