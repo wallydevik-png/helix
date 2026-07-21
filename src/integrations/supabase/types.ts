@@ -615,6 +615,42 @@ export type Database = {
         }
         Relationships: []
       }
+      market_intel: {
+        Row: {
+          confidence: number
+          expires_at: string
+          id: string
+          kind: string
+          payload: Json
+          provider: string
+          score: number
+          symbol: string
+          ts: string
+        }
+        Insert: {
+          confidence?: number
+          expires_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          provider: string
+          score: number
+          symbol: string
+          ts?: string
+        }
+        Update: {
+          confidence?: number
+          expires_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          provider?: string
+          score?: number
+          symbol?: string
+          ts?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           channels: Json
