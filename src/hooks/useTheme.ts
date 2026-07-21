@@ -4,6 +4,7 @@ export type Theme = "light" | "dark";
 const KEY = "neurlx-theme";
 
 function apply(theme: Theme) {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.classList.remove("light", "dark");
   root.classList.add(theme);
@@ -14,7 +15,7 @@ export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("dark");
 
   useEffect(() => {
-    const stored = (typeof localStorage !== "undefined" && localStorage.getItem(KEY)) as Theme | null;
+    const stored = (typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null) as Theme | null;
     const prefersLight = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches;
     const initial: Theme = stored ?? (prefersLight ? "light" : "dark");
     setThemeState(initial);

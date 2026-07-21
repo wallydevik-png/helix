@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: credsData } = useQuery({ queryKey: ["biometric-creds"], queryFn: () => fetchCreds() });
   const unread = unreadData?.unread ?? 0;
   const hasCredentials = (credsData ?? []).length > 0;
-  const { isOnline, installPrompt, isInstalled, install } = usePWA();
+  const { isOnline, canInstall, install } = usePWA();
   const { authenticate } = useBiometric();
   const { theme, toggle: toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <WifiOff className="w-3.5 h-3.5" /> Offline
               </span>
             )}
-            {installPrompt && !isInstalled && (
+            {canInstall && (
               <button
                 onClick={install}
                 aria-label="Install NeurlX app"

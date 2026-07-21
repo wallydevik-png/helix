@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/mobile")({
 });
 
 function Mobile() {
-  const { isInstalled, isOnline, supportsPush, install, installPrompt } = usePWA();
+  const { isInstalled, isOnline, supportsPush, install, canInstall, installHelp } = usePWA();
   const { register, authenticate, busy, error, isSupported } = useBiometric();
   const fetchCreds = useServerFn(listCredentials);
   const removeFn = useServerFn(removeCredential);
@@ -82,12 +82,13 @@ function Mobile() {
               </div>
               <button
                 onClick={install}
-                disabled={!installPrompt || isInstalled}
+                disabled={!canInstall}
                 className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium disabled:opacity-40"
               >
                 {isInstalled ? "Installed" : "Install"}
               </button>
             </div>
+            {installHelp && <div className="text-xs text-muted-foreground px-1">{installHelp}</div>}
             <div className="flex items-center justify-between p-3 rounded-md border border-border bg-secondary/30">
               <div className="flex items-center gap-2">
                 {isOnline ? <Wifi className="h-4 w-4 text-success" /> : <WifiOff className="h-4 w-4 text-warning" />}

@@ -10,6 +10,7 @@ export function usePWA() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [supportsPush, setSupportsPush] = useState(false);
+  const [installHelp, setInstallHelp] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -42,7 +43,18 @@ export function usePWA() {
   }, []);
 
   const install = useCallback(async () => {
-    if (!installPrompt) return;
+    setInstallHelp(null);
+    if (!installPrompt) {
+      const userAgent = window.navigator.userAgent;
+      const isAppleMobile = /iphone|ipad|ipod/i.test(userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+      const message = isAppleMobile || isSafari
+        ? "Open the browser share menu and choose Add to Home Screen."
+        : "Open the browser menu and choose Install app or Add to Home screen.";
+      setInstallHelp(message);
+      window.alert(message);
+      return;
+    }
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
     if (choice.outcome === "accepted") {
@@ -64,9 +76,9 @@ export function usePWA() {
     });
   }, []);
 
-  const canInstall = Boolean(installPrompt) && !isInstalled;
+  const canInstall = !isInstalled;
 
-  return { installPrompt, canInstall, isInstalled, isOnline, supportsPush, install, subscribePush };
+  return { installPrompt, canInstall, isInstalled, isOnline, supportsPush, install, installHelp, subscribePush };
 }
 
 function urlBase64ToUint8Array(base64String: string) {
