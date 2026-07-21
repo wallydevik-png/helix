@@ -538,7 +538,16 @@ export const generateRecommendations = createServerFn({ method: "POST" })
     const toInsert = recs.filter(r => !existingTitles.has(String(r.title)));
     if (toInsert.length) {
       await supabase.from("optimization_recommendations").insert(
-        toInsert.map(r => ({ user_id: userId, ...r }))
+        toInsert.map(r => ({
+          user_id: userId,
+          kind: String(r.kind),
+          target: r.target ? String(r.target) : null,
+          title: String(r.title),
+          rationale: String(r.rationale),
+          suggested_change: r.suggested_change,
+          evidence: r.evidence ?? null,
+          severity: String(r.severity ?? "info"),
+        }))
       );
     }
     return { generated: toInsert.length, evaluated: recs.length };
