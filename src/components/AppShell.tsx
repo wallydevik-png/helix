@@ -8,7 +8,7 @@ import {
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, Layers3, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
   Sparkles, Wallet, Bot, Bell, Rocket, ScrollText, Smartphone, Fingerprint, WifiOff,
-  Sun, Moon, Shield, HeartPulse, Banknote, Globe, Trophy,
+  Sun, Moon, Shield, HeartPulse, Banknote, Globe, Trophy, Download,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { Logo } from "@/components/Logo";
@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: credsData } = useQuery({ queryKey: ["biometric-creds"], queryFn: () => fetchCreds() });
   const unread = unreadData?.unread ?? 0;
   const hasCredentials = (credsData ?? []).length > 0;
-  const { isOnline } = usePWA();
+  const { isOnline, installPrompt, isInstalled, install } = usePWA();
   const { authenticate } = useBiometric();
   const { theme, toggle: toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -141,6 +141,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-warning/15 text-warning border border-warning/30">
                 <WifiOff className="w-3.5 h-3.5" /> Offline
               </span>
+            )}
+            {installPrompt && !isInstalled && (
+              <button
+                onClick={install}
+                aria-label="Install NeurlX app"
+                title="Install NeurlX"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <Download className="w-3.5 h-3.5" /> Install app
+              </button>
             )}
             <button
               onClick={toggleTheme}
