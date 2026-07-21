@@ -41,6 +41,7 @@ import { Route as AuthenticatedCapitalManagementRouteImport } from './routes/_au
 import { Route as AuthenticatedCapitalRouteImport } from './routes/_authenticated/capital'
 import { Route as AuthenticatedAutonomousRouteImport } from './routes/_authenticated/autonomous'
 import { Route as AuthenticatedAutomationRouteImport } from './routes/_authenticated/automation'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAltdataRouteImport } from './routes/_authenticated/altdata'
@@ -215,6 +216,11 @@ const AuthenticatedAutomationRoute = AuthenticatedAutomationRouteImport.update({
   path: '/automation',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
   id: '/approvals',
   path: '/approvals',
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/altdata': typeof AuthenticatedAltdataRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/automation': typeof AuthenticatedAutomationRoute
   '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/altdata': typeof AuthenticatedAltdataRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/automation': typeof AuthenticatedAutomationRoute
   '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
@@ -359,6 +367,7 @@ export interface FileRoutesById {
   '/_authenticated/altdata': typeof AuthenticatedAltdataRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/automation': typeof AuthenticatedAutomationRoute
   '/_authenticated/autonomous': typeof AuthenticatedAutonomousRoute
   '/_authenticated/capital': typeof AuthenticatedCapitalRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/altdata'
     | '/analytics'
     | '/approvals'
+    | '/assistant'
     | '/automation'
     | '/autonomous'
     | '/capital'
@@ -445,6 +455,7 @@ export interface FileRouteTypes {
     | '/altdata'
     | '/analytics'
     | '/approvals'
+    | '/assistant'
     | '/automation'
     | '/autonomous'
     | '/capital'
@@ -488,6 +499,7 @@ export interface FileRouteTypes {
     | '/_authenticated/altdata'
     | '/_authenticated/analytics'
     | '/_authenticated/approvals'
+    | '/_authenticated/assistant'
     | '/_authenticated/automation'
     | '/_authenticated/autonomous'
     | '/_authenticated/capital'
@@ -756,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAutomationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/approvals': {
       id: '/_authenticated/approvals'
       path: '/approvals'
@@ -843,6 +862,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAltdataRoute: typeof AuthenticatedAltdataRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
   AuthenticatedAutomationRoute: typeof AuthenticatedAutomationRoute
   AuthenticatedAutonomousRoute: typeof AuthenticatedAutonomousRoute
   AuthenticatedCapitalRoute: typeof AuthenticatedCapitalRoute
@@ -880,6 +900,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAltdataRoute: AuthenticatedAltdataRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
   AuthenticatedAutomationRoute: AuthenticatedAutomationRoute,
   AuthenticatedAutonomousRoute: AuthenticatedAutonomousRoute,
   AuthenticatedCapitalRoute: AuthenticatedCapitalRoute,
