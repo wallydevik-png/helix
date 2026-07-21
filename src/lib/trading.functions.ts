@@ -101,6 +101,11 @@ const AddConnectionSchema = z.object({
   label: z.string().min(1).max(80),
   credentials: z.record(z.string()).default({}),
   tradingEnabled: z.boolean().default(false),
+  // Universal Broker Hub extensions — all optional so paper/legacy flows keep working.
+  brokerCategory: z.enum(["crypto", "forex_cfd", "stocks_multi"]).optional(),
+  authMethod: z.enum(["oauth", "api_key", "metatrader", "sdk", "paper"]).optional(),
+  brokerServer: z.string().max(120).optional(),
+  accountNumber: z.string().max(80).optional(),
 });
 
 export const addConnection = createServerFn({ method: "POST" })
@@ -108,6 +113,18 @@ export const addConnection = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AddConnectionSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { encryptJSON } = await import("@/lib/crypto.server");
+    const { getBroker } = await import("@/lib/connectors/brokerRegistry");
+    const broker = getBroker(data.connectorId);
+    if (!broker) throw new Error(`Broker "${data.connectorId}" is not registered.`);
+
+    // Hard security rule — reject any credential payload that even hints at
+    // withdrawal permissions. Live permission scanning happens in
+    // scanConnectionPermissions once the connector is first-class.
+    const credKeys = Object.keys(data.credentials).map(k => k.toLowerCase());
+    if (credKeys.some(k => k.includes("withdraw"))) {
+      throw new Error("NeurlX never accepts credentials with withdrawal permissions. Regenerate the API key without withdrawal rights.");
+    }
+
     const ciphertext = Object.keys(data.credentials).length
       ? encryptJSON(data.credentials)
       : null;
@@ -116,17 +133,32 @@ export const addConnection = createServerFn({ method: "POST" })
       connector_id: data.connectorId,
       label: data.label,
       status: "connected",
-      health: "healthy",
+      health: broker.implemented ? "healthy" : "pending",
       read_enabled: true,
       trading_enabled: data.tradingEnabled && data.connectorId === "paper",
       credential_ciphertext: ciphertext,
       last_sync_at: new Date().toISOString(),
+      broker_category: data.brokerCategory ?? broker.category,
+      auth_method: data.authMethod ?? broker.authMethod,
+      broker_server: data.brokerServer ?? null,
+      account_number: data.accountNumber ?? null,
+      permissions_snapshot: {
+        declared: {
+          reading: true,
+          trading: data.tradingEnabled && data.connectorId === "paper",
+          withdrawals: false,
+        },
+      },
     }).select().single();
     if (error) throw error;
     await context.supabase.from("audit_log").insert({
       user_id: context.userId, action: "connection.add",
       entity: "exchange_connections", entity_id: row.id,
-      payload: { connectorId: data.connectorId, label: data.label },
+      payload: {
+        connectorId: data.connectorId, label: data.label,
+        authMethod: data.authMethod ?? broker.authMethod,
+        brokerCategory: data.brokerCategory ?? broker.category,
+      },
     });
     return row;
   });
