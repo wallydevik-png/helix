@@ -436,7 +436,7 @@ export const getTradeHistory = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { data: orders } = await supabase.from("orders")
-      .select("id,symbol,side,qty,filled_price,filled_qty,status,fees,created_at,position_id,is_live,connector_id")
+      .select("id,symbol,side,qty,filled_price,status,fees,created_at,position_id,is_live,execution_venue")
       .eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
     const posIds = Array.from(new Set((orders ?? []).map(o => o.position_id).filter((x): x is string => !!x)));
     let posMap = new Map<string, { status: string; realized_pnl: number | null; closed_at: string | null }>();
