@@ -86,7 +86,7 @@ export const getCapitalOverview = createServerFn({ method: "GET" })
       context.supabase.from("capital_ledger").select("*").eq("user_id", uid).order("occurred_at", { ascending: false }).limit(200),
       context.supabase.from("capital_allocations").select("*").eq("user_id", uid).order("bucket"),
       context.supabase.from("capital_policy").select("*").eq("user_id", uid).maybeSingle(),
-      context.supabase.from("capital_snapshots").select("equity_usd, taken_at").eq("user_id", uid).order("taken_at", { ascending: false }).limit(30),
+      context.supabase.from("capital_snapshots").select("equity, snapshot_date").eq("user_id", uid).order("snapshot_date", { ascending: false }).limit(30),
     ]);
     if (ledgerRes.error) throw new Error(ledgerRes.error.message);
 
