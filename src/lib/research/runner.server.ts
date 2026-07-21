@@ -153,8 +153,8 @@ export async function runHypothesis(
     equityCurve.push({ ts: last.ts, equity });
   }
 
-  const returns = equityCurve.map((p, i) => i === 0 ? 0 : (p.equity - equityCurve[i - 1].equity) / equityCurve[i - 1].equity);
-  const metrics = computeMetrics(equityCurve, trades.map(t => ({ pnl: (t.pnlPct / 100) * startCapital })), startCapital, returns);
+  const tradeStats = trades.map(t => ({ pnl: (t.pnlPct / 100) * startCapital, pnlPct: t.pnlPct / 100 }));
+  const metrics = computeMetrics(tradeStats, equityCurve, startCapital);
   const wins = trades.filter(t => t.pnlPct > 0).length;
   const losses = trades.filter(t => t.pnlPct <= 0).length;
 

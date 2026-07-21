@@ -64,7 +64,7 @@ export const FACTORS: FactorSpec[] = [
     ],
     eval: (c, p) => {
       const m = macd(closes(c), Math.round(p.fast), Math.round(p.slow), Math.round(p.signal));
-      return m ? m.hist : null;
+      return m ? m.histogram : null;
     },
   },
   {
