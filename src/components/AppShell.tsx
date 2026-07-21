@@ -7,6 +7,7 @@ import {
   TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity, LineChart,
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
+  Sparkles, Wallet,
 } from "lucide-react";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { toast } from "sonner";
@@ -14,6 +15,8 @@ import { toast } from "sonner";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/monitoring", label: "Live Monitoring", icon: Radar },
+  { to: "/intelligence", label: "Live Intelligence", icon: Sparkles },
+  { to: "/capital", label: "Capital Growth", icon: Wallet },
   { to: "/readiness", label: "Readiness Score", icon: Gauge },
   { to: "/portfolio", label: "AI Decision Center", icon: Brain },
   { to: "/market", label: "Market Scanner", icon: LineChart },
