@@ -310,6 +310,45 @@ export type Database = {
           },
         ]
       }
+      capital_snapshots: {
+        Row: {
+          cash_balance: number
+          created_at: string
+          equity: number
+          gross_exposure: number
+          id: string
+          open_positions: number
+          realized_pnl_total: number
+          snapshot_date: string
+          unrealized_pnl: number
+          user_id: string
+        }
+        Insert: {
+          cash_balance?: number
+          created_at?: string
+          equity?: number
+          gross_exposure?: number
+          id?: string
+          open_positions?: number
+          realized_pnl_total?: number
+          snapshot_date: string
+          unrealized_pnl?: number
+          user_id: string
+        }
+        Update: {
+          cash_balance?: number
+          created_at?: string
+          equity?: number
+          gross_exposure?: number
+          id?: string
+          open_positions?: number
+          realized_pnl_total?: number
+          snapshot_date?: string
+          unrealized_pnl?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       exchange_connections: {
         Row: {
           clock_skew_ms: number | null
@@ -1011,11 +1050,14 @@ export type Database = {
       }
       trade_journal: {
         Row: {
+          actual_outcome: string | null
           ai_confidence: number | null
+          attribution: Json
           created_at: string
           duration_seconds: number | null
           entry_price: number | null
           entry_reason: string | null
+          execution_latency_ms: number | null
           execution_quality_score: number | null
           exit_price: number | null
           exit_reason: string | null
@@ -1026,6 +1068,7 @@ export type Database = {
           market_regime: string | null
           model_version: string | null
           position_id: string | null
+          predicted_outcome: string | null
           qty: number | null
           realized_pnl: number | null
           side: string
@@ -1037,11 +1080,14 @@ export type Database = {
           user_modifications: number
         }
         Insert: {
+          actual_outcome?: string | null
           ai_confidence?: number | null
+          attribution?: Json
           created_at?: string
           duration_seconds?: number | null
           entry_price?: number | null
           entry_reason?: string | null
+          execution_latency_ms?: number | null
           execution_quality_score?: number | null
           exit_price?: number | null
           exit_reason?: string | null
@@ -1052,6 +1098,7 @@ export type Database = {
           market_regime?: string | null
           model_version?: string | null
           position_id?: string | null
+          predicted_outcome?: string | null
           qty?: number | null
           realized_pnl?: number | null
           side: string
@@ -1063,11 +1110,14 @@ export type Database = {
           user_modifications?: number
         }
         Update: {
+          actual_outcome?: string | null
           ai_confidence?: number | null
+          attribution?: Json
           created_at?: string
           duration_seconds?: number | null
           entry_price?: number | null
           entry_reason?: string | null
+          execution_latency_ms?: number | null
           execution_quality_score?: number | null
           exit_price?: number | null
           exit_reason?: string | null
@@ -1078,6 +1128,7 @@ export type Database = {
           market_regime?: string | null
           model_version?: string | null
           position_id?: string | null
+          predicted_outcome?: string | null
           qty?: number | null
           realized_pnl?: number | null
           side?: string
