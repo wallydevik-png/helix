@@ -62,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hasCredentials = (credsData ?? []).length > 0;
   const { isOnline } = usePWA();
   const { authenticate } = useBiometric();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
   const killActive = data?.settings?.kill_switch_active;
@@ -133,6 +134,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <WifiOff className="w-3.5 h-3.5" /> Offline
               </span>
             )}
+            <button
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="w-10 h-10 grid place-items-center rounded-md border border-border hover:bg-secondary/50"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <Link to="/notifications" aria-label="Notifications"
               className="relative w-10 h-10 grid place-items-center rounded-md border border-border hover:bg-secondary/50">
               <Bell className="w-4 h-4" />
