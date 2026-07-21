@@ -75,8 +75,8 @@ function ReliabilityPage() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Metric label="Health Score" value={d ? `${d.healthScore}` : "—"} accent={d && d.healthScore >= 80 ? "success" : d && d.healthScore >= 50 ? "warning" : "danger"} />
-        <Metric label="Operating Mode" value={d ? d.status.mode.toUpperCase() : "—"} accent={d?.status.mode === "normal" ? "success" : d?.status.mode === "halted" ? "danger" : "warning"} />
+        <Metric label="Health Score" value={d ? `${d.healthScore}` : "—"} tone={d && d.healthScore >= 80 ? "pos" : d && d.healthScore < 50 ? "neg" : undefined} />
+        <Metric label="Operating Mode" value={d ? d.status.mode.toUpperCase() : "—"} tone={d?.status.mode === "normal" ? "pos" : d?.status.mode === "halted" ? "neg" : undefined} />
         <Metric label="Components OK" value={d ? `${d.components.filter(c => c.status === "ok").length}/${d.components.length}` : "—"} />
         <Metric label="Last Watchdog" value={d?.status.last_watchdog_at ? new Date(d.status.last_watchdog_at).toLocaleTimeString() : "Never"} />
       </div>
