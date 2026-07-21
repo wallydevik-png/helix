@@ -106,7 +106,7 @@ function IntelPage() {
               onChange={e => setSymbol(e.target.value)}
               className="h-9 px-3 rounded-md border border-border bg-card text-sm font-mono"
             >
-              {symbols.map(s => <option key={s} value={s}>{s}</option>)}
+              {symbols.map((s: string) => <option key={s} value={s}>{s}</option>)}
             </select>
             <button
               onClick={onRefresh}
