@@ -88,18 +88,19 @@ export const activateLiveTrading = createServerFn({ method: "POST" })
     if (conn.withdrawal_detected && !data.acknowledgedWithdrawal) {
       throw new Error("API key has WITHDRAWAL permission. Revoke it on the exchange and re-scan — or explicitly acknowledge the risk.");
     }
-    // In this simulated build we still block real venues.
-    const simulatedOnly = conn.connector_id !== "paper";
+    // Live trading is now supported on connectors with real execution
+    // (currently: Binance). Paper keeps its own simulation path.
+    const isReal = conn.connector_id !== "paper";
 
     await context.supabase.from("exchange_connections").update({
-      trading_enabled: !simulatedOnly, // never true for real venues in this build
+      trading_enabled: true,
       trading_activated_at: new Date().toISOString(),
       max_notional_per_order: data.maxNotionalPerOrder,
     }).eq("id", data.connectionId);
 
     await context.supabase.from("automation_settings").update({
       live_max_notional_per_order: data.maxNotionalPerOrder,
-      live_trading_enabled: !simulatedOnly,
+      live_trading_enabled: isReal,
       activation_confirmed_phrase_at: new Date().toISOString(),
     }).eq("user_id", context.userId);
 
@@ -108,15 +109,15 @@ export const activateLiveTrading = createServerFn({ method: "POST" })
       entity: "exchange_connections", entity_id: data.connectionId,
       payload: {
         connector: conn.connector_id, maxNotional: data.maxNotionalPerOrder,
-        simulatedOnly, acknowledgedWithdrawal: data.acknowledgedWithdrawal,
+        isReal, acknowledgedWithdrawal: data.acknowledgedWithdrawal,
       },
     });
 
     return {
-      ok: true, simulatedOnly,
-      message: simulatedOnly
-        ? "Activated in SIMULATED mode — this build routes every order to the paper connector regardless of connector."
-        : "Live trading activated on paper account.",
+      ok: true, simulatedOnly: !isReal,
+      message: isReal
+        ? "Live trading activated. Every trade still requires your explicit approval."
+        : "Paper trading activated.",
     };
   });
 
