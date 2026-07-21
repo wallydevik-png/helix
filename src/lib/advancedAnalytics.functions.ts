@@ -10,7 +10,7 @@ type Row = {
   fees_total: number | string | null; slippage_bps_avg: number | string | null;
   duration_seconds: number | null; exit_reason: string | null;
   market_regime: string | null; ai_confidence: number | string | null;
-  created_at: string; closed_at?: string | null;
+  created_at: string; 
 };
 
 function n(v: unknown) { return Number(v ?? 0); }
@@ -38,7 +38,7 @@ export const getAdvancedAnalytics = createServerFn({ method: "GET" })
     // Monthly returns
     const byMonth = new Map<string, { pnl: number; trades: number; wins: number }>();
     for (const r of rows) {
-      const d = new Date(r.closed_at ?? r.created_at);
+      const d = new Date(r.created_at);
       const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
       const cur = byMonth.get(key) ?? { pnl: 0, trades: 0, wins: 0 };
       cur.pnl += n(r.realized_pnl); cur.trades += 1; if (n(r.realized_pnl) > 0) cur.wins += 1;
@@ -74,11 +74,11 @@ export const getAdvancedAnalytics = createServerFn({ method: "GET" })
     const sorted = [...rows].sort((a, b) => n(b.realized_pnl) - n(a.realized_pnl));
     const bestTrades = sorted.slice(0, 5).map(r => ({
       symbol: r.symbol, side: r.side, pnl: n(r.realized_pnl),
-      closed_at: r.closed_at ?? r.created_at, exit_reason: r.exit_reason,
+      closed_at: r.created_at, exit_reason: r.exit_reason,
     }));
     const worstTrades = sorted.slice(-5).reverse().map(r => ({
       symbol: r.symbol, side: r.side, pnl: n(r.realized_pnl),
-      closed_at: r.closed_at ?? r.created_at, exit_reason: r.exit_reason,
+      closed_at: r.created_at, exit_reason: r.exit_reason,
     }));
 
     // Daily returns from snapshots → Sharpe / Sortino / Calmar
