@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/signals")({
   component: Signals,
 });
 
+const SYMBOL_CHOICES = ["auto", "BTC-USD", "ETH-USD", "SOL-USD", "ADA-USD", "AVAX-USD", "LINK-USD", "DOGE-USD", "MATIC-USD", "AAPL", "TSLA", "NVDA"];
+
 interface Contribution { indicator: string; signal: "bullish" | "bearish" | "neutral"; weight: number; detail: string }
 
 function Signals() {
@@ -21,11 +23,24 @@ function Signals() {
   const approveFn = useServerFn(approveSignal);
   const rejectFn = useServerFn(rejectSignal);
   const qc = useQueryClient();
+  const [symbol, setSymbol] = useState<string>("auto");
+  const [busy, setBusy] = useState(false);
   const { data = [] } = useQuery({ queryKey: ["signals"], queryFn: () => fetchFn(), refetchInterval: 15000 });
 
   async function generate() {
-    try { await genFn({ data: {} }); toast.success("New signal generated"); qc.invalidateQueries(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    setBusy(true);
+    try {
+      const payload = symbol === "auto" ? {} : { symbol };
+      await genFn({ data: payload });
+      toast.success(symbol === "auto" ? "New signal generated" : `Signal generated for ${symbol}`);
+      qc.invalidateQueries();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed";
+      // The engine only produces a trade when indicators align. A flat/ranging
+      // market is a valid, honest "no setup" — treat it as info, not an error.
+      if (/no high-conviction|no signal|wait/i.test(msg)) toast.info(msg);
+      else toast.error(msg);
+    } finally { setBusy(false); }
   }
   async function evaluate() {
     try { const r = await evalFn(); toast.success(`Evaluated ${r.evaluated} past signals`); qc.invalidateQueries(); }
