@@ -22,6 +22,7 @@ import { toast } from "sonner";
 const NAV = [
   { to: "/onboarding", label: "Get Started", icon: Rocket },
   { to: "/assistant", label: "Personal Assistant", icon: Sparkles },
+  { to: "/community", label: "Community", icon: Trophy },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/monitoring", label: "Live Monitoring", icon: Radar },
   { to: "/intelligence", label: "Live Intelligence", icon: Sparkles },
