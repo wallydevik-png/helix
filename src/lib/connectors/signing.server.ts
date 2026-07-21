@@ -38,15 +38,18 @@ export async function hmacSha256Base64(secret: string, message: string): Promise
 
 /** HMAC-SHA512 raw bytes. Building block for Kraken's compound signature. */
 export async function hmacSha512Raw(secretBytes: Uint8Array, messageBytes: Uint8Array): Promise<ArrayBuffer> {
+  const keyBuf = secretBytes.buffer.slice(secretBytes.byteOffset, secretBytes.byteOffset + secretBytes.byteLength) as ArrayBuffer;
+  const msgBuf = messageBytes.buffer.slice(messageBytes.byteOffset, messageBytes.byteOffset + messageBytes.byteLength) as ArrayBuffer;
   const key = await crypto.subtle.importKey(
-    "raw", secretBytes, { name: "HMAC", hash: "SHA-512" }, false, ["sign"],
+    "raw", keyBuf, { name: "HMAC", hash: "SHA-512" }, false, ["sign"],
   );
-  return crypto.subtle.sign("HMAC", key, messageBytes);
+  return crypto.subtle.sign("HMAC", key, msgBuf);
 }
 
 /** SHA-256 raw bytes. Used by Kraken's signature preimage. */
 export async function sha256Raw(bytes: Uint8Array): Promise<ArrayBuffer> {
-  return crypto.subtle.digest("SHA-256", bytes);
+  const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  return crypto.subtle.digest("SHA-256", buf);
 }
 
 /**
