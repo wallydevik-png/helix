@@ -210,10 +210,8 @@ export const approveSignalV2 = createServerFn({ method: "POST" })
       }
       const { data: settings } = await supabase.from("automation_settings").select("*")
         .eq("user_id", userId).maybeSingle();
-      if (settings && settings.mode === "autonomous") {
-        // Assisted-mode only in this build; hard block.
-        throw new Error("Autonomous mode is disabled in this build. Approve trades individually.");
-      }
+      // Autonomous mode is handled separately (src/lib/autonomous.functions.ts).
+      // Manual approvals remain available in any mode as an override.
       const notional = qty * entry;
       if (settings && notional > Number(settings.live_max_notional_per_order)) {
         throw new Error(`Order notional $${notional.toFixed(2)} exceeds live cap $${settings.live_max_notional_per_order}.`);
