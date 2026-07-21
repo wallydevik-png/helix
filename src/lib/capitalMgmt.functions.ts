@@ -104,8 +104,8 @@ export const getCapitalOverview = createServerFn({ method: "GET" })
     const totalPnl = realized - fees;
 
     const snaps = (snapRes.data ?? []).slice().reverse();
-    const latestEquity = snaps.length ? Number(snaps[snaps.length - 1].equity_usd) : netContributed + totalPnl;
-    const firstEquity = snaps.length ? Number(snaps[0].equity_usd) : latestEquity;
+    const latestEquity = snaps.length ? Number(snaps[snaps.length - 1].equity) : netContributed + totalPnl;
+    const firstEquity = snaps.length ? Number(snaps[0].equity) : latestEquity;
     const equityChangePct = firstEquity > 0 ? ((latestEquity - firstEquity) / firstEquity) * 100 : 0;
 
     const policy = policyRes.data ?? {
