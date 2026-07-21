@@ -234,6 +234,42 @@ function Accounts() {
                     onToggle={(v) => togglePerm(c.id, v)}
                   />
                 </div>
+
+                {c.connector_id !== "paper" && c.status === "connected" && (
+                  <div className={`mt-4 pt-4 border-t border-border`}>
+                    <div className={`rounded-lg border p-4 ${c.autopilot_on ? "border-primary/50 bg-primary/5" : "border-border bg-secondary/30"}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex gap-2.5 min-w-0">
+                          <Sparkles className={`w-5 h-5 mt-0.5 shrink-0 ${c.autopilot_on ? "text-primary" : "text-muted-foreground"}`} />
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold flex items-center gap-2">
+                              Full Autopilot
+                              {c.autopilot_on && (
+                                <span className="text-[10px] font-mono uppercase rounded px-1.5 py-0.5 bg-primary/20 text-primary border border-primary/40">
+                                  ● ON
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Let the AI do everything — scan markets, backtest, generate signals, size positions, place live orders, and manage SL/TP automatically. You just log in to see your trade history and P&L. Withdrawals stay OFF for your safety.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          disabled={!c.trading_enabled}
+                          onClick={() => toggleAutopilot(c.id, !c.autopilot_on)}
+                          title={!c.trading_enabled ? "Enable Trading permission first" : ""}
+                          className={`w-12 h-7 rounded-full transition relative shrink-0 ${
+                            c.autopilot_on ? "bg-primary" : "bg-muted"
+                          } ${!c.trading_enabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                        >
+                          <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-background transition ${c.autopilot_on ? "left-[22px]" : "left-0.5"}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
             );
           })}
