@@ -322,8 +322,15 @@ export const generateAndRouteSignal = createServerFn({ method: "POST" })
     }).select().single();
     if (error) throw error;
 
-    if (settings.mode === "autonomous") {
-      await executeSignalInternal(supabase, userId, inserted.id);
+    if (settings.mode === "autonomous" && sig.confidence >= Number(settings.min_confidence)) {
+      // Best-effort auto-execute; if the risk gate blocks it, keep the signal
+      // pending so the user can still review it manually instead of failing
+      // the whole generation.
+      try {
+        await executeSignalInternal(supabase, userId, inserted.id);
+      } catch (e) {
+        console.warn("[generateAndRouteSignal] auto-execute skipped:", e instanceof Error ? e.message : e);
+      }
     }
     return inserted;
   });
