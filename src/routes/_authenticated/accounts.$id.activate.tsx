@@ -125,17 +125,16 @@ function Activate() {
         }
       />
 
-      <div className="panel p-4 mb-4 border-warning/40 bg-warning/5">
+      <div className="panel p-4 mb-4 border-destructive/40 bg-destructive/5">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div className="text-sm">
-            <div className="font-semibold text-warning">Simulated-mode notice</div>
+            <div className="font-semibold text-destructive">Real money warning</div>
             <p className="text-muted-foreground mt-1">
-              This build routes <b>every order to the paper connector</b> regardless of activation state.
-              Activation lifts the UI gate and exercises the full production workflow (permission scan,
-              circuit breakers, journal, execution log) but no real orders are placed. Switching to real
-              venue execution is a one-line change in <code className="text-xs">engine.server.ts</code> once
-              you're ready.
+              Once activated, NeurlX will place <b>real orders on {conn.label}</b> using your API key.
+              Every order still passes the risk gate, pre-trade checks, and circuit breakers — but
+              fills, fees, and P&amp;L are real. Start with a small <b>Max notional per order</b> until
+              you've verified behaviour end-to-end.
             </p>
           </div>
         </div>
