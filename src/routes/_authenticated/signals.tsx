@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/signals")({
   component: Signals,
 });
 
+const SYMBOL_CHOICES = ["auto", "BTC-USD", "ETH-USD", "SOL-USD", "ADA-USD", "AVAX-USD", "LINK-USD", "DOGE-USD", "MATIC-USD", "AAPL", "TSLA", "NVDA"];
+
 interface Contribution { indicator: string; signal: "bullish" | "bearish" | "neutral"; weight: number; detail: string }
 
 function Signals() {
@@ -21,11 +23,24 @@ function Signals() {
   const approveFn = useServerFn(approveSignal);
   const rejectFn = useServerFn(rejectSignal);
   const qc = useQueryClient();
+  const [symbol, setSymbol] = useState<string>("auto");
+  const [busy, setBusy] = useState(false);
   const { data = [] } = useQuery({ queryKey: ["signals"], queryFn: () => fetchFn(), refetchInterval: 15000 });
 
   async function generate() {
-    try { await genFn({ data: {} }); toast.success("New signal generated"); qc.invalidateQueries(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    setBusy(true);
+    try {
+      const payload = symbol === "auto" ? {} : { symbol };
+      await genFn({ data: payload });
+      toast.success(symbol === "auto" ? "New signal generated" : `Signal generated for ${symbol}`);
+      qc.invalidateQueries();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed";
+      // The engine only produces a trade when indicators align. A flat/ranging
+      // market is a valid, honest "no setup" — treat it as info, not an error.
+      if (/no high-conviction|no signal|wait/i.test(msg)) toast.info(msg);
+      else toast.error(msg);
+    } finally { setBusy(false); }
   }
   async function evaluate() {
     try { const r = await evalFn(); toast.success(`Evaluated ${r.evaluated} past signals`); qc.invalidateQueries(); }
@@ -46,20 +61,31 @@ function Signals() {
     <AppShell>
       <PageHeader
         title="AI Signals"
-        subtitle="Every signal shows the indicators that drove it, the market regime, and the risk factors."
+        subtitle="Pick a market or let the AI scan for you. Every signal shows the indicators, market regime, and risk factors that drove it."
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={symbol}
+              onChange={e => setSymbol(e.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+              aria-label="Market to analyze"
+            >
+              {SYMBOL_CHOICES.map(s => (
+                <option key={s} value={s}>{s === "auto" ? "Auto (scan best)" : s}</option>
+              ))}
+            </select>
             <button onClick={evaluate}
               className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary/50">
               <RefreshCw className="w-4 h-4" /> Evaluate outcomes
             </button>
-            <button onClick={generate}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-              <Sparkles className="w-4 h-4" /> Generate signal
+            <button onClick={generate} disabled={busy}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
+              <Sparkles className="w-4 h-4" /> {busy ? "Analyzing…" : "Generate signal"}
             </button>
           </div>
         }
       />
+
 
       {pendingCount > 0 && (
         <Link to="/approvals" className="mb-3 flex items-center justify-between panel px-4 py-3 hover:bg-secondary/40">
