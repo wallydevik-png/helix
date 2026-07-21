@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: credsData } = useQuery({ queryKey: ["biometric-creds"], queryFn: () => fetchCreds() });
   const unread = unreadData?.unread ?? 0;
   const hasCredentials = (credsData ?? []).length > 0;
-  const { isOnline } = usePWA();
+  const { isOnline, installPrompt, isInstalled, install } = usePWA();
   const { authenticate } = useBiometric();
   const { theme, toggle: toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
