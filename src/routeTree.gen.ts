@@ -29,6 +29,7 @@ import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authent
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCapitalRouteImport } from './routes/_authenticated/capital'
+import { Route as AuthenticatedAutonomousRouteImport } from './routes/_authenticated/autonomous'
 import { Route as AuthenticatedAutomationRouteImport } from './routes/_authenticated/automation'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -36,6 +37,7 @@ import { Route as AuthenticatedAccuracyRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedBacktestsIdRouteImport } from './routes/_authenticated/backtests.$id'
 import { Route as AuthenticatedAccountsNewRouteImport } from './routes/_authenticated/accounts.new'
+import { Route as ApiPublicCronAutonomousRouteImport } from './routes/api/public/cron.autonomous'
 import { Route as AuthenticatedAccountsIdActivateRouteImport } from './routes/_authenticated/accounts.$id.activate'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -139,6 +141,11 @@ const AuthenticatedCapitalRoute = AuthenticatedCapitalRouteImport.update({
   path: '/capital',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAutonomousRoute = AuthenticatedAutonomousRouteImport.update({
+  id: '/autonomous',
+  path: '/autonomous',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAutomationRoute = AuthenticatedAutomationRouteImport.update({
   id: '/automation',
   path: '/automation',
@@ -176,6 +183,11 @@ const AuthenticatedAccountsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsRoute,
   } as any)
+const ApiPublicCronAutonomousRoute = ApiPublicCronAutonomousRouteImport.update({
+  id: '/api/public/cron/autonomous',
+  path: '/api/public/cron/autonomous',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountsIdActivateRoute =
   AuthenticatedAccountsIdActivateRouteImport.update({
     id: '/$id/activate',
@@ -192,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -211,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -221,6 +235,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -240,6 +255,7 @@ export interface FileRoutesByTo {
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -252,6 +268,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/automation': typeof AuthenticatedAutomationRoute
+  '/_authenticated/autonomous': typeof AuthenticatedAutonomousRoute
   '/_authenticated/capital': typeof AuthenticatedCapitalRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -271,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/_authenticated/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/_authenticated/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -283,6 +301,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/autonomous'
     | '/capital'
     | '/dashboard'
     | '/history'
@@ -302,6 +321,7 @@ export interface FileRouteTypes {
     | '/accounts/new'
     | '/backtests/$id'
     | '/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -312,6 +332,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/autonomous'
     | '/capital'
     | '/dashboard'
     | '/history'
@@ -331,6 +352,7 @@ export interface FileRouteTypes {
     | '/accounts/new'
     | '/backtests/$id'
     | '/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   id:
     | '__root__'
     | '/'
@@ -342,6 +364,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/approvals'
     | '/_authenticated/automation'
+    | '/_authenticated/autonomous'
     | '/_authenticated/capital'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
@@ -361,6 +384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/new'
     | '/_authenticated/backtests/$id'
     | '/_authenticated/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -368,6 +392,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicCronAutonomousRoute: typeof ApiPublicCronAutonomousRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -512,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCapitalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/autonomous': {
+      id: '/_authenticated/autonomous'
+      path: '/autonomous'
+      fullPath: '/autonomous'
+      preLoaderRoute: typeof AuthenticatedAutonomousRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/automation': {
       id: '/_authenticated/automation'
       path: '/automation'
@@ -561,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsNewRouteImport
       parentRoute: typeof AuthenticatedAccountsRoute
     }
+    '/api/public/cron/autonomous': {
+      id: '/api/public/cron/autonomous'
+      path: '/api/public/cron/autonomous'
+      fullPath: '/api/public/cron/autonomous'
+      preLoaderRoute: typeof ApiPublicCronAutonomousRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/accounts/$id/activate': {
       id: '/_authenticated/accounts/$id/activate'
       path: '/$id/activate'
@@ -592,6 +631,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAutomationRoute: typeof AuthenticatedAutomationRoute
+  AuthenticatedAutonomousRoute: typeof AuthenticatedAutonomousRoute
   AuthenticatedCapitalRoute: typeof AuthenticatedCapitalRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -617,6 +657,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAutomationRoute: AuthenticatedAutomationRoute,
+  AuthenticatedAutonomousRoute: AuthenticatedAutonomousRoute,
   AuthenticatedCapitalRoute: AuthenticatedCapitalRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
@@ -644,6 +685,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicCronAutonomousRoute: ApiPublicCronAutonomousRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
