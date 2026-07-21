@@ -583,7 +583,10 @@ export const decideRecommendation = createServerFn({ method: "POST" })
     if (rec.status !== "pending") throw new Error("Already decided");
 
     const newStatus = data.action === "approve" ? "approved" : "rejected";
-    const patch: Row = { status: newStatus, reviewer_note: data.note ?? null };
+    const patch: { status: string; reviewer_note: string | null; approved_at?: string; rejected_at?: string } = {
+      status: newStatus,
+      reviewer_note: data.note ?? null,
+    };
     if (data.action === "approve") patch.approved_at = new Date().toISOString();
     else patch.rejected_at = new Date().toISOString();
 
