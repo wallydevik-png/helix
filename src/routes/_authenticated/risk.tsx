@@ -104,7 +104,7 @@ function RiskPage() {
                 <AlertTriangle className="w-4 h-4" /> Cap Breaches
               </div>
               <ul className="text-xs space-y-0.5">
-                {dash.data!.breaches.map((b, i) => <li key={i}>• {b}</li>)}
+                {(dash.data!.breaches as string[]).map((b: string, i: number) => <li key={i}>• {b}</li>)}
               </ul>
             </div>
           )}
