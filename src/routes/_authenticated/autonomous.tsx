@@ -43,7 +43,7 @@ function AutonomousPage() {
   useEffect(() => {
     if (data?.settings) {
       setForm({
-        mode: data.settings.mode,
+        mode: data.settings.mode as "manual" | "assisted" | "autonomous",
         autonomous_min_confidence: Number(data.settings.autonomous_min_confidence ?? 0.85),
         autonomous_max_open_positions: data.settings.autonomous_max_open_positions ?? 3,
         autonomous_cooldown_seconds: data.settings.autonomous_cooldown_seconds ?? 300,

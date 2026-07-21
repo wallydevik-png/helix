@@ -29,6 +29,7 @@ import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authent
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCapitalRouteImport } from './routes/_authenticated/capital'
+import { Route as AuthenticatedAutonomousRouteImport } from './routes/_authenticated/autonomous'
 import { Route as AuthenticatedAutomationRouteImport } from './routes/_authenticated/automation'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -139,6 +140,11 @@ const AuthenticatedCapitalRoute = AuthenticatedCapitalRouteImport.update({
   path: '/capital',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAutonomousRoute = AuthenticatedAutonomousRouteImport.update({
+  id: '/autonomous',
+  path: '/autonomous',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAutomationRoute = AuthenticatedAutomationRouteImport.update({
   id: '/automation',
   path: '/automation',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/automation': typeof AuthenticatedAutomationRoute
+  '/_authenticated/autonomous': typeof AuthenticatedAutonomousRoute
   '/_authenticated/capital': typeof AuthenticatedCapitalRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/autonomous'
     | '/capital'
     | '/dashboard'
     | '/history'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/autonomous'
     | '/capital'
     | '/dashboard'
     | '/history'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/approvals'
     | '/_authenticated/automation'
+    | '/_authenticated/autonomous'
     | '/_authenticated/capital'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
@@ -512,6 +524,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCapitalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/autonomous': {
+      id: '/_authenticated/autonomous'
+      path: '/autonomous'
+      fullPath: '/autonomous'
+      preLoaderRoute: typeof AuthenticatedAutonomousRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/automation': {
       id: '/_authenticated/automation'
       path: '/automation'
@@ -592,6 +611,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAutomationRoute: typeof AuthenticatedAutomationRoute
+  AuthenticatedAutonomousRoute: typeof AuthenticatedAutonomousRoute
   AuthenticatedCapitalRoute: typeof AuthenticatedCapitalRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -617,6 +637,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAutomationRoute: AuthenticatedAutomationRoute,
+  AuthenticatedAutonomousRoute: AuthenticatedAutonomousRoute,
   AuthenticatedCapitalRoute: AuthenticatedCapitalRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
