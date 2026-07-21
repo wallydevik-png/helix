@@ -48,6 +48,11 @@ function NewAccount() {
       toast.error("NeurlX never accepts withdrawal credentials.");
       return;
     }
+    const missingCredential = broker.credentialFields?.find(f => !f.optional && !(creds[f.key] ?? "").trim());
+    if (missingCredential) {
+      toast.error(`${missingCredential.label} is required for ${broker.displayName}.`);
+      return;
+    }
     setBusy(true);
     try {
       await add({
