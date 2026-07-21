@@ -8,12 +8,14 @@ import {
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
   Sparkles, Wallet, Bot, Bell, Rocket, ScrollText, Smartphone, Fingerprint, WifiOff,
+  Sun, Moon,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { listCredentials } from "@/lib/webauthn.functions";
 import { usePWA, vibrate } from "@/hooks/usePWA";
 import { useBiometric } from "@/hooks/useBiometric";
+import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
 const NAV = [
@@ -60,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hasCredentials = (credsData ?? []).length > 0;
   const { isOnline } = usePWA();
   const { authenticate } = useBiometric();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
   const killActive = data?.settings?.kill_switch_active;
@@ -131,6 +134,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <WifiOff className="w-3.5 h-3.5" /> Offline
               </span>
             )}
+            <button
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="w-10 h-10 grid place-items-center rounded-md border border-border hover:bg-secondary/50"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <Link to="/notifications" aria-label="Notifications"
               className="relative w-10 h-10 grid place-items-center rounded-md border border-border hover:bg-secondary/50">
               <Bell className="w-4 h-4" />
