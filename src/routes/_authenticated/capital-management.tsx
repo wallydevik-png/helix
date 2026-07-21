@@ -35,7 +35,7 @@ function CapitalMgmtPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["capital-mgmt"] });
 
   const addMut = useMutation({
-    mutationFn: (payload: Parameters<typeof addFn>[0]["data"]) => addFn({ data: payload }),
+    mutationFn: (payload: any) => addFn({ data: payload }),
     onSuccess: () => { toast.success("Entry added"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
