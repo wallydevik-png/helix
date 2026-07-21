@@ -1090,6 +1090,36 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          event_type: string
+          id: string
+          message: string
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event_type: string
+          id?: string
+          message: string
+          severity?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          id?: string
+          message?: string
+          severity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       research_hypotheses: {
         Row: {
           created_at: string
@@ -1341,6 +1371,30 @@ export type Database = {
         }
         Relationships: []
       }
+      state_snapshots: {
+        Row: {
+          captured_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          id?: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           capital_allocation_pct: number
@@ -1390,6 +1444,63 @@ export type Database = {
           params?: Json
           strategy_type?: string
           symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_heartbeats: {
+        Row: {
+          component: string
+          detail: Json
+          id: string
+          latency_ms: number | null
+          observed_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          component: string
+          detail?: Json
+          id?: string
+          latency_ms?: number | null
+          observed_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          component?: string
+          detail?: Json
+          id?: string
+          latency_ms?: number | null
+          observed_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_status: {
+        Row: {
+          degraded_since: string | null
+          last_watchdog_at: string | null
+          mode: string
+          reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          degraded_since?: string | null
+          last_watchdog_at?: string | null
+          mode?: string
+          reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          degraded_since?: string | null
+          last_watchdog_at?: string | null
+          mode?: string
+          reason?: string | null
           updated_at?: string
           user_id?: string
         }
