@@ -87,6 +87,18 @@ function Accounts() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{c.label}</h3>
+                      <span className={`text-[10px] font-mono uppercase font-bold rounded px-2 py-0.5 ${
+                        c.trading_enabled && c.status === "connected" && c.connector_id !== "paper"
+                          ? "bg-destructive text-destructive-foreground"
+                          : c.connector_id === "paper"
+                          ? "bg-primary/20 text-primary border border-primary/40"
+                          : "bg-warning/15 text-warning border border-warning/40"
+                      }`}>
+                        {c.trading_enabled && c.status === "connected" && c.connector_id !== "paper"
+                          ? "● LIVE — real money"
+                          : c.connector_id === "paper" ? "Demo · paper"
+                          : "Read-only"}
+                      </span>
                       <span className="text-[10px] font-mono uppercase text-muted-foreground border border-border rounded px-1.5 py-0.5">
                         {desc?.displayName ?? c.connector_id}
                       </span>
