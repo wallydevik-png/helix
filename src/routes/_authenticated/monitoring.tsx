@@ -125,9 +125,82 @@ function Monitoring() {
         )}
       </div>
 
+      <ExecutionHealthPanel />
+
       <div className="text-[11px] text-muted-foreground mt-4 font-mono">
-        Generated {new Date(data.generatedAt).toLocaleTimeString()} · This build is read-only. No live orders are ever placed.
+        Generated {new Date(data.generatedAt).toLocaleTimeString()} · Live execution routes only when explicitly enabled per approval.
       </div>
     </AppShell>
+  );
+}
+
+function ExecutionHealthPanel() {
+  const fn = useServerFn(getExecutionHealth);
+  const rec = useServerFn(reconcileNow);
+  const { data, refetch } = useQuery({
+    queryKey: ["exec-health"], queryFn: () => fn(), refetchInterval: 30000,
+  });
+  if (!data) return null;
+  const pctErr = (data.api.errorRate * 100).toFixed(1);
+  const pctFill = (data.orders.fillRate * 100).toFixed(0);
+  async function onReconcile(id: string) {
+    try { const r = await rec({ data: { connectionId: id } });
+      toast.success(`Reconciled ${r.reconciled ?? 0} orders`); refetch();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  }
+  return (
+    <div className="panel p-4 sm:p-6 mt-4">
+      <div className="flex items-center gap-2 mb-3">
+        <AlertTriangle className="w-4 h-4 text-warning" />
+        <h2 className="font-semibold">Execution health · last 24h</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Metric label="API calls" value={String(data.api.total)} sub={`${pctErr}% errors`} />
+        <Metric label="API p95 latency" value={`${data.api.p95Ms} ms`} sub={`p50 ${data.api.p50Ms} ms`} />
+        <Metric label="Orders (live/total)" value={`${data.orders.live}/${data.orders.total}`} sub={`${pctFill}% fill rate`} />
+        <Metric label="Slippage p95" value={`${data.orders.slippageP95Bps.toFixed(1)} bps`} sub={`exec p95 ${data.orders.execP95Ms} ms`} />
+      </div>
+      {data.connections.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {data.connections.map(c => (
+            <div key={c.id} className="flex flex-wrap items-center gap-2 text-xs font-mono border border-border rounded-md p-2">
+              <span className="font-semibold">{c.connectorId.toUpperCase()}</span>
+              <span className="text-muted-foreground truncate">{c.label}</span>
+              <span className={c.health === "healthy" ? "text-success" : c.health === "degraded" ? "text-warning" : "text-destructive"}>
+                {c.health ?? "unknown"}
+              </span>
+              {c.clockSkewMs !== null && <span className="text-muted-foreground">skew {c.clockSkewMs}ms</span>}
+              {c.tradingEnabled && <span className="text-warning">LIVE ENABLED</span>}
+              <button onClick={() => onReconcile(c.id)}
+                className="ml-auto inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 hover:bg-secondary">
+                <RefreshCw className="w-3 h-3" /> Reconcile
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {data.recentIncidents.length > 0 && (
+        <div className="mt-4">
+          <div className="text-[10px] uppercase font-mono text-muted-foreground mb-1">Recent incidents</div>
+          {data.recentIncidents.slice(0, 5).map((i, k) => (
+            <div key={k} className="text-xs font-mono flex gap-2">
+              <span className={i.severity === "critical" || i.severity === "error" ? "text-destructive" : "text-warning"}>
+                {i.severity}
+              </span>
+              <span className="text-muted-foreground">{i.event}</span>
+              <span className="truncate">{i.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {data.api.total === 0 && (
+        <div className="mt-3 text-xs text-muted-foreground">No exchange API traffic yet. Once live trading is enabled, health metrics appear here.</div>
+      )}
+      <div className="mt-3 flex justify-end">
+        <button onClick={() => refetch()} className="text-[10px] uppercase font-mono text-primary hover:underline">
+          <CheckCircle2 className="w-3 h-3 inline mr-1" /> Refresh
+        </button>
+      </div>
+    </div>
   );
 }
