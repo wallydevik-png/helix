@@ -601,7 +601,7 @@ export const scanConnectionHealth = createServerFn({ method: "POST" })
 
     await context.supabase.from("exchange_connections").update({
       latency_ms: latency,
-      permissions_snapshot: { ...(conn.permissions_snapshot as object ?? {}), live: permissions },
+      permissions_snapshot: { ...(conn.permissions_snapshot as Record<string, unknown> ?? {}), live: permissions } as never,
       error_history: nextErrors,
       health: ok ? "healthy" : "warning",
       last_sync_at: new Date().toISOString(),
