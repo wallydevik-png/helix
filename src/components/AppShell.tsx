@@ -217,9 +217,40 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 pb-16 sm:pb-0">
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">{children}</div>
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur border-t border-border pb-[env(safe-area-inset-bottom)]">
+        {!isOnline && (
+          <div className="bg-warning/15 text-warning text-[10px] font-medium text-center py-1 border-b border-warning/20">
+            <WifiOff className="w-3 h-3 inline-block align-text-bottom mr-1" /> Offline mode
+          </div>
+        )}
+        <div className="flex items-center justify-around h-14">
+          {[
+            { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
+            { to: "/approvals", icon: CheckSquare, label: "Approvals" },
+            { to: "/positions", icon: Activity, label: "Positions" },
+            { to: "/mobile", icon: Smartphone, label: "Mobile" },
+          ].map(item => {
+            const active = pathname === item.to || pathname.startsWith(item.to + "/");
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex flex-col items-center justify-center gap-0.5 w-full h-full text-[10px] ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
