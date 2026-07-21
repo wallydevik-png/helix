@@ -67,7 +67,7 @@ function RiskPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
-  const r = dash.data?.report;
+  const r = dash.data?.report as PortfolioRiskReport | undefined;
   const scoreColor = useMemo(() => {
     const s = r?.riskScore ?? 0;
     if (s > 70) return "text-destructive";
