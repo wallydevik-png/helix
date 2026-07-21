@@ -7,7 +7,7 @@ import {
   TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity, LineChart,
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
-  Sparkles, Wallet,
+  Sparkles, Wallet, Bot,
 } from "lucide-react";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { toast } from "sonner";
