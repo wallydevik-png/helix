@@ -25,8 +25,10 @@ import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMarketRouteImport } from './routes/_authenticated/market'
 import { Route as AuthenticatedLabRouteImport } from './routes/_authenticated/lab'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCapitalRouteImport } from './routes/_authenticated/capital'
 import { Route as AuthenticatedAutomationRouteImport } from './routes/_authenticated/automation'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -116,6 +118,12 @@ const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIntelligenceRoute =
+  AuthenticatedIntelligenceRouteImport.update({
+    id: '/intelligence',
+    path: '/intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -124,6 +132,11 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCapitalRoute = AuthenticatedCapitalRouteImport.update({
+  id: '/capital',
+  path: '/capital',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAutomationRoute = AuthenticatedAutomationRouteImport.update({
@@ -179,8 +192,10 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/lab': typeof AuthenticatedLabRoute
   '/market': typeof AuthenticatedMarketRoute
@@ -206,8 +221,10 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/automation': typeof AuthenticatedAutomationRoute
+  '/capital': typeof AuthenticatedCapitalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/lab': typeof AuthenticatedLabRoute
   '/market': typeof AuthenticatedMarketRoute
@@ -235,8 +252,10 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/automation': typeof AuthenticatedAutomationRoute
+  '/_authenticated/capital': typeof AuthenticatedCapitalRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/lab': typeof AuthenticatedLabRoute
   '/_authenticated/market': typeof AuthenticatedMarketRoute
@@ -264,8 +283,10 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/capital'
     | '/dashboard'
     | '/history'
+    | '/intelligence'
     | '/journal'
     | '/lab'
     | '/market'
@@ -291,8 +312,10 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/automation'
+    | '/capital'
     | '/dashboard'
     | '/history'
+    | '/intelligence'
     | '/journal'
     | '/lab'
     | '/market'
@@ -319,8 +342,10 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/approvals'
     | '/_authenticated/automation'
+    | '/_authenticated/capital'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
+    | '/_authenticated/intelligence'
     | '/_authenticated/journal'
     | '/_authenticated/lab'
     | '/_authenticated/market'
@@ -459,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/intelligence': {
+      id: '/_authenticated/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/history': {
       id: '/_authenticated/history'
       path: '/history'
@@ -471,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/capital': {
+      id: '/_authenticated/capital'
+      path: '/capital'
+      fullPath: '/capital'
+      preLoaderRoute: typeof AuthenticatedCapitalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/automation': {
@@ -553,8 +592,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAutomationRoute: typeof AuthenticatedAutomationRoute
+  AuthenticatedCapitalRoute: typeof AuthenticatedCapitalRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLabRoute: typeof AuthenticatedLabRoute
   AuthenticatedMarketRoute: typeof AuthenticatedMarketRoute
@@ -576,8 +617,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAutomationRoute: AuthenticatedAutomationRoute,
+  AuthenticatedCapitalRoute: AuthenticatedCapitalRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLabRoute: AuthenticatedLabRoute,
   AuthenticatedMarketRoute: AuthenticatedMarketRoute,
