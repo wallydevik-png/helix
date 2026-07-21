@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
+import { listCredentials } from "@/lib/webauthn.functions";
+import { usePWA, vibrate } from "@/hooks/usePWA";
+import { useBiometric } from "@/hooks/useBiometric";
 import { toast } from "sonner";
 
 const NAV = [
