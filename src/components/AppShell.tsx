@@ -8,7 +8,7 @@ import {
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, Layers3, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
   Sparkles, Wallet, Bot, Bell, Rocket, ScrollText, Smartphone, Fingerprint, WifiOff,
-  Sun, Moon, Shield,
+  Sun, Moon, Shield, HeartPulse,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { Logo } from "@/components/Logo";
@@ -50,6 +50,7 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/compliance", label: "Compliance & Data", icon: ScrollText },
   { to: "/mobile", label: "Mobile & Security", icon: Smartphone },
+  { to: "/reliability", label: "Reliability", icon: HeartPulse },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
