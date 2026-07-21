@@ -37,6 +37,7 @@ import { Route as AuthenticatedIntelRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
+import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedCapitalManagementRouteImport } from './routes/_authenticated/capital-management'
 import { Route as AuthenticatedCapitalRouteImport } from './routes/_authenticated/capital'
 import { Route as AuthenticatedAutonomousRouteImport } from './routes/_authenticated/autonomous'
@@ -195,6 +196,11 @@ const AuthenticatedComplianceRoute = AuthenticatedComplianceRouteImport.update({
   path: '/compliance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCapitalManagementRoute =
   AuthenticatedCapitalManagementRouteImport.update({
     id: '/capital-management',
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/capital-management': typeof AuthenticatedCapitalManagementRoute
+  '/community': typeof AuthenticatedCommunityRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -327,6 +334,7 @@ export interface FileRoutesByTo {
   '/autonomous': typeof AuthenticatedAutonomousRoute
   '/capital': typeof AuthenticatedCapitalRoute
   '/capital-management': typeof AuthenticatedCapitalManagementRoute
+  '/community': typeof AuthenticatedCommunityRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -372,6 +380,7 @@ export interface FileRoutesById {
   '/_authenticated/autonomous': typeof AuthenticatedAutonomousRoute
   '/_authenticated/capital': typeof AuthenticatedCapitalRoute
   '/_authenticated/capital-management': typeof AuthenticatedCapitalManagementRoute
+  '/_authenticated/community': typeof AuthenticatedCommunityRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -417,6 +426,7 @@ export interface FileRouteTypes {
     | '/autonomous'
     | '/capital'
     | '/capital-management'
+    | '/community'
     | '/compliance'
     | '/dashboard'
     | '/history'
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/autonomous'
     | '/capital'
     | '/capital-management'
+    | '/community'
     | '/compliance'
     | '/dashboard'
     | '/history'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/autonomous'
     | '/_authenticated/capital'
     | '/_authenticated/capital-management'
+    | '/_authenticated/community'
     | '/_authenticated/compliance'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
@@ -740,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComplianceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/community': {
+      id: '/_authenticated/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/capital-management': {
       id: '/_authenticated/capital-management'
       path: '/capital-management'
@@ -867,6 +886,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutonomousRoute: typeof AuthenticatedAutonomousRoute
   AuthenticatedCapitalRoute: typeof AuthenticatedCapitalRoute
   AuthenticatedCapitalManagementRoute: typeof AuthenticatedCapitalManagementRoute
+  AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -905,6 +925,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAutonomousRoute: AuthenticatedAutonomousRoute,
   AuthenticatedCapitalRoute: AuthenticatedCapitalRoute,
   AuthenticatedCapitalManagementRoute: AuthenticatedCapitalManagementRoute,
+  AuthenticatedCommunityRoute: AuthenticatedCommunityRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,

@@ -662,6 +662,39 @@ export type Database = {
         }
         Relationships: []
       }
+      copy_subscriptions: {
+        Row: {
+          active: boolean
+          allocation_pct: number
+          created_at: string
+          follower_id: string
+          id: string
+          leader_id: string
+          max_position_size: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allocation_pct?: number
+          created_at?: string
+          follower_id: string
+          id?: string
+          leader_id: string
+          max_position_size?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allocation_pct?: number
+          created_at?: string
+          follower_id?: string
+          id?: string
+          leader_id?: string
+          max_position_size?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exchange_connections: {
         Row: {
           clock_skew_ms: number | null
@@ -781,6 +814,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
       }
       gdpr_requests: {
         Row: {
@@ -1269,6 +1320,39 @@ export type Database = {
           },
         ]
       }
+      profile_stats: {
+        Row: {
+          followers_count: number
+          max_drawdown_pct: number
+          sharpe: number
+          total_return_pct: number
+          trades_count: number
+          updated_at: string
+          user_id: string
+          win_rate: number
+        }
+        Insert: {
+          followers_count?: number
+          max_drawdown_pct?: number
+          sharpe?: number
+          total_return_pct?: number
+          trades_count?: number
+          updated_at?: string
+          user_id: string
+          win_rate?: number
+        }
+        Update: {
+          followers_count?: number
+          max_drawdown_pct?: number
+          sharpe?: number
+          total_return_pct?: number
+          trades_count?: number
+          updated_at?: string
+          user_id?: string
+          win_rate?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           autonomous_disclaimer_acked_at: string | null
@@ -1293,6 +1377,42 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          allow_copy: boolean
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          is_public: boolean
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          allow_copy?: boolean
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          is_public?: boolean
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          allow_copy?: boolean
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          is_public?: boolean
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
         }
         Relationships: []
       }
