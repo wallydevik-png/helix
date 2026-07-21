@@ -37,11 +37,23 @@ export const getDashboard = createServerFn({ method: "GET" })
 export const listConnections = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("exchange_connections").select("*").eq("user_id", context.userId)
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: settings }] = await Promise.all([
+      context.supabase.from("exchange_connections").select("*")
+        .eq("user_id", context.userId).order("created_at", { ascending: false }),
+      context.supabase.from("automation_settings")
+        .select("mode,autonomous_live_enabled,autonomous_default_connection_id,autonomous_last_run_at,kill_switch_active,live_kill_reason")
+        .eq("user_id", context.userId).maybeSingle(),
+    ]);
     if (error) throw error;
-    return data ?? [];
+    const rows = (data ?? []).map(c => ({
+      ...c,
+      autopilot_on:
+        settings?.mode === "autonomous"
+        && !!settings?.autonomous_live_enabled
+        && !settings?.kill_switch_active
+        && settings?.autonomous_default_connection_id === c.id,
+    }));
+    return rows;
   });
 
 export const listPositions = createServerFn({ method: "GET" })
