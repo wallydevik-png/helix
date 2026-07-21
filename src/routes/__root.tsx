@@ -94,20 +94,25 @@ function RootComponent() {
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
   useEffect(() => {
-    // A prior service worker cached HTML and blanked the app. Actively
-    // unregister any lingering registration and clear caches instead of
-    // registering a new one. Re-enable a PWA SW only after the caching
-    // strategy is redesigned (network-first for navigations).
-    if ("serviceWorker" in navigator) {
+    // Register the network-first PWA service worker so the browser offers
+    // "Install app". The SW never caches HTML — navigations always hit the
+    // network — so it can never blank the app the way the previous cache-first
+    // worker did. Skip registration in Lovable preview / dev / iframes.
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    const host = window.location.hostname;
+    const inIframe = window.self !== window.top;
+    const isPreview =
+      host.startsWith("id-preview--") || host.startsWith("preview--") ||
+      host.endsWith(".lovableproject.com") || host === "lovableproject.com" ||
+      host.endsWith(".lovableproject-dev.com") || host === "lovableproject-dev.com";
+    const killSwitch = new URL(window.location.href).searchParams.get("sw") === "off";
+    if (!import.meta.env.PROD || inIframe || isPreview || killSwitch) {
       navigator.serviceWorker.getRegistrations()
         .then((regs) => Promise.all(regs.map((r) => r.unregister())))
         .catch(() => {});
-      if (typeof caches !== "undefined") {
-        caches.keys()
-          .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-          .catch(() => {});
-      }
+      return;
     }
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }, []);
 
   return (
