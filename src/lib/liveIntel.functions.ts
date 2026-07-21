@@ -12,7 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // -----------------------------------------------------------------------------
 export async function snapshotCapitalInternal(supabase: SupabaseClient, userId: string) {
   const [acctR, posR, journalR] = await Promise.all([
-    supabase.from("paper_accounts").select("cash_balance,realized_pnl").eq("user_id", userId).maybeSingle(),
+    supabase.from("paper_accounts").select("cash_balance,equity").eq("user_id", userId).maybeSingle(),
     supabase.from("positions").select("qty,avg_entry,side,ai_regime,stop_loss").eq("user_id", userId).eq("status", "open"),
     supabase.from("trade_journal").select("realized_pnl").eq("user_id", userId),
   ]);
@@ -324,7 +324,7 @@ export const getCapitalGrowth = createServerFn({ method: "GET" })
     const [snapsR, acctR, posR, journalR] = await Promise.all([
       supabase.from("capital_snapshots").select("*").eq("user_id", userId)
         .order("snapshot_date", { ascending: true }).limit(365),
-      supabase.from("paper_accounts").select("cash_balance,realized_pnl").eq("user_id", userId).maybeSingle(),
+      supabase.from("paper_accounts").select("cash_balance,equity").eq("user_id", userId).maybeSingle(),
       supabase.from("positions").select("qty,avg_entry").eq("user_id", userId).eq("status", "open"),
       supabase.from("trade_journal").select("realized_pnl,created_at").eq("user_id", userId).order("created_at", { ascending: true }),
     ]);
@@ -346,7 +346,7 @@ export const getCapitalGrowth = createServerFn({ method: "GET" })
     }
     const monthly = [...monthMap.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, pnl]) => ({ month, pnl }));
 
-    const realizedTotal = Number(acctR.data?.realized_pnl ?? 0);
+    const realizedTotal = (journalR.data ?? []).reduce((s, r) => s + Number(r.realized_pnl ?? 0), 0);
 
     return {
       current: {
