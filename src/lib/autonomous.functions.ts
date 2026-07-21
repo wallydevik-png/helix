@@ -104,6 +104,13 @@ export async function runAutonomousCycleFor(
       message: `${maxLosses} consecutive losing trades — autonomous halted.`,
       payload: {},
     });
+    const { emitNotification } = await import("@/lib/notifications/emit.server");
+    await emitNotification(supabase, userId, {
+      kind: "autonomous.breaker", severity: "emergency",
+      title: "Autonomous trading paused",
+      message: `${maxLosses} consecutive losses — autonomous halted for 24h.`,
+      payload: { maxLosses },
+    });
     return finish("consecutive_losses_breaker");
   }
 

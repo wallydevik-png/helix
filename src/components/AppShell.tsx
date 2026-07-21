@@ -7,8 +7,9 @@ import {
   TerminalSquare, LayoutDashboard, Plug, Signal, CheckSquare, Activity, LineChart,
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
-  Sparkles, Wallet, Bot,
+  Sparkles, Wallet, Bot, Bell,
 } from "lucide-react";
+import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ const NAV = [
   { to: "/history", label: "History", icon: History },
   { to: "/automation", label: "Automation", icon: Sliders },
   { to: "/autonomous", label: "Autonomous Engine", icon: Bot },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
@@ -42,8 +44,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const pathname = useRouterState({ select: s => s.location.pathname });
   const fetchDash = useServerFn(getDashboard);
+  const fetchUnread = useServerFn(unreadNotificationCount);
   const kill = useServerFn(setKillSwitch);
   const { data } = useQuery({ queryKey: ["dashboard-mini"], queryFn: () => fetchDash(), refetchInterval: 15000 });
+  const { data: unreadData } = useQuery({ queryKey: ["notifications-unread"], queryFn: () => fetchUnread(), refetchInterval: 20000 });
+  const unread = unreadData?.unread ?? 0;
   const [open, setOpen] = useState(false);
 
   const killActive = data?.settings?.kill_switch_active;
@@ -106,6 +111,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
+            <Link to="/notifications" aria-label="Notifications"
+              className="relative w-10 h-10 grid place-items-center rounded-md border border-border hover:bg-secondary/50">
+              <Bell className="w-4 h-4" />
+              {unread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-mono grid place-items-center">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </Link>
             <button
               onClick={toggleKill}
               className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border ${

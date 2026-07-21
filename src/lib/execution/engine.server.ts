@@ -251,6 +251,13 @@ export async function submitOrder(
         status: "rejected", error_message: pre.reason,
       }).eq("id", orderRow.id);
       await recordFailure(supabase, userId, "rejection");
+      const { emitNotification } = await import("@/lib/notifications/emit.server");
+      await emitNotification(supabase, userId, {
+        kind: "trade.rejected", severity: "warning",
+        title: `Live trade rejected: ${req.symbol}`,
+        message: pre.reason ?? "Pre-trade check failed",
+        payload: { orderId: orderRow.id, symbol: req.symbol, side: req.side, qty: req.qty },
+      });
       return { orderId: orderRow.id, positionId: null, status: "rejected",
         filledPrice: null, filledQty: 0, fees: 0, slippageBps: 0, isLive: true,
         message: pre.reason };
@@ -325,6 +332,15 @@ export async function submitOrder(
 
     await recordSuccess(supabase, userId);
 
+    const { emitNotification } = await import("@/lib/notifications/emit.server");
+    await emitNotification(supabase, userId, {
+      kind: "trade.executed",
+      severity: isLive ? "warning" : "info",
+      title: `${isLive ? "LIVE" : "Paper"} ${req.side.toUpperCase()} ${req.symbol}`,
+      message: `${status === "partially_filled" ? "Partial fill " : "Filled "}${filledQty} @ ${result.filledPrice ?? "?"} · fees ${fees}`,
+      payload: { orderId: orderRow.id, symbol: req.symbol, side: req.side, qty: filledQty, price: result.filledPrice, live: isLive },
+    });
+
     return {
       orderId: orderRow.id, positionId: null, status,
       filledPrice: result.filledPrice ?? null, filledQty, fees,
@@ -341,6 +357,12 @@ export async function submitOrder(
       severity: "error", message: msg, payload: { isLive },
     });
     await recordFailure(supabase, userId, "failure");
+    const { emitNotification } = await import("@/lib/notifications/emit.server");
+    await emitNotification(supabase, userId, {
+      kind: "trade.error", severity: isLive ? "critical" : "warning",
+      title: `Execution error: ${req.symbol}`,
+      message: msg, payload: { orderId: orderRow.id, live: isLive },
+    });
     return { orderId: orderRow.id, positionId: null, status: "error",
       filledPrice: null, filledQty: 0, fees: 0, slippageBps: 0, isLive, message: msg };
   }
