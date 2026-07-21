@@ -42,6 +42,7 @@ const NAV = [
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/compliance", label: "Compliance & Data", icon: ScrollText },
+  { to: "/mobile", label: "Mobile & Security", icon: Smartphone },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
