@@ -339,6 +339,60 @@ export const setKillSwitch = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// One-tap "Full Autopilot" — flips a single connection into fully autonomous
+// live trading. The AI will scan markets, generate signals, run risk checks,
+// and place orders on this account until the user turns it off.
+// NOTE: withdrawals are NEVER enabled (security invariant) — profits stay
+// in the exchange account.
+export const enableFullAutopilot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ connectionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: conn } = await supabase.from("exchange_connections")
+      .select("id,status,trading_enabled,connector_id,label")
+      .eq("id", data.connectionId).eq("user_id", userId).maybeSingle();
+    if (!conn) throw new Error("Connection not found.");
+    if (conn.status !== "connected") throw new Error("Connect this account first.");
+    if (!conn.trading_enabled) throw new Error("Enable Trading permission on this account first.");
+
+    // Auto-ack disclaimer on autopilot enable (user is explicitly opting in).
+    await supabase.from("profiles")
+      .update({ autonomous_disclaimer_acked_at: new Date().toISOString() })
+      .eq("id", userId);
+
+    const { error } = await supabase.from("automation_settings").update({
+      mode: "autonomous",
+      autonomous_live_enabled: true,
+      autonomous_default_connection_id: conn.id,
+      kill_switch_active: false,
+      autonomous_last_run_at: null,
+      autonomous_consecutive_losses: 0,
+      live_kill_reason: null,
+    }).eq("user_id", userId);
+    if (error) throw error;
+
+    await supabase.from("audit_log").insert({
+      user_id: userId, action: "autopilot.enable", entity: "exchange_connections",
+      entity_id: conn.id, payload: { connector: conn.connector_id, label: conn.label },
+    });
+    return { ok: true };
+  });
+
+export const disableFullAutopilot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await context.supabase.from("automation_settings").update({
+      autonomous_live_enabled: false,
+      mode: "assisted",
+    }).eq("user_id", context.userId);
+    await context.supabase.from("audit_log").insert({
+      user_id: context.userId, action: "autopilot.disable",
+      entity: "automation_settings", entity_id: null, payload: {},
+    });
+    return { ok: true };
+  });
+
 // Generate a fresh AI signal from the market scanner. Picks the highest-
 // conviction opportunity from allowed assets, stores full explainability,
 // and (in Autonomous mode with a tradable direction) executes.
