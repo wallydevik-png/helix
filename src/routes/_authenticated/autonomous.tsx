@@ -249,7 +249,7 @@ function AutonomousPage() {
                           .map(([k, v]) => `${k}×${v}`).join(", ")}
                       </div>
                     )}
-                    {(r.errors ?? []).length > 0 && (
+                    {Array.isArray(r.errors) && (r.errors as unknown[]).length > 0 && (
                       <div className="text-xs text-destructive mt-1">
                         errors: {(r.errors as string[]).join("; ")}
                       </div>
