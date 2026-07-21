@@ -8,7 +8,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createConnector } from "./factory.server";
 import { getCapabilities } from "./capabilities";
-import { decryptJSON } from "@/lib/crypto.server";
 
 export interface TestStepResult {
   step: string;
@@ -47,8 +46,9 @@ export async function runConnectorTestSuite(
     .select("*").eq("id", connectionId).eq("user_id", userId).maybeSingle();
   if (error || !conn) throw new Error("Connection not found");
 
+  const { decryptJSON } = await import("@/lib/crypto.server");
   const creds: Record<string, string> = conn.credential_ciphertext
-    ? decryptJSON<Record<string, string>>(conn.credential_ciphertext)
+    ? await decryptJSON<Record<string, string>>(conn.credential_ciphertext)
     : {};
 
   const connector = createConnector(conn.connector_id, creds, {
