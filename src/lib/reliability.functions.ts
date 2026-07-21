@@ -20,7 +20,8 @@ async function ensureStatus(supabase: any, userId: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function logEvent(supabase: any, userId: string, event_type: string, severity: string, message: string, detail: Record<string, unknown> = {}) {
-  await supabase.from("recovery_events").insert({ user_id: userId, event_type, severity, message, detail });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await supabase.from("recovery_events").insert({ user_id: userId, event_type, severity, message, detail: detail as any });
 }
 
 // ---------- Heartbeat submission ----------
