@@ -37,6 +37,7 @@ import { Route as AuthenticatedAccuracyRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedBacktestsIdRouteImport } from './routes/_authenticated/backtests.$id'
 import { Route as AuthenticatedAccountsNewRouteImport } from './routes/_authenticated/accounts.new'
+import { Route as ApiPublicCronAutonomousRouteImport } from './routes/api/public/cron.autonomous'
 import { Route as AuthenticatedAccountsIdActivateRouteImport } from './routes/_authenticated/accounts.$id.activate'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -182,6 +183,11 @@ const AuthenticatedAccountsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedAccountsRoute,
   } as any)
+const ApiPublicCronAutonomousRoute = ApiPublicCronAutonomousRouteImport.update({
+  id: '/api/public/cron/autonomous',
+  path: '/api/public/cron/autonomous',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountsIdActivateRoute =
   AuthenticatedAccountsIdActivateRouteImport.update({
     id: '/$id/activate',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts/new': typeof AuthenticatedAccountsNewRoute
   '/_authenticated/backtests/$id': typeof AuthenticatedBacktestsIdRoute
   '/_authenticated/accounts/$id/activate': typeof AuthenticatedAccountsIdActivateRoute
+  '/api/public/cron/autonomous': typeof ApiPublicCronAutonomousRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/accounts/new'
     | '/backtests/$id'
     | '/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/accounts/new'
     | '/backtests/$id'
     | '/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   id:
     | '__root__'
     | '/'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/new'
     | '/_authenticated/backtests/$id'
     | '/_authenticated/accounts/$id/activate'
+    | '/api/public/cron/autonomous'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,6 +392,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicCronAutonomousRoute: typeof ApiPublicCronAutonomousRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -580,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsNewRouteImport
       parentRoute: typeof AuthenticatedAccountsRoute
     }
+    '/api/public/cron/autonomous': {
+      id: '/api/public/cron/autonomous'
+      path: '/api/public/cron/autonomous'
+      fullPath: '/api/public/cron/autonomous'
+      preLoaderRoute: typeof ApiPublicCronAutonomousRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/accounts/$id/activate': {
       id: '/_authenticated/accounts/$id/activate'
       path: '/$id/activate'
@@ -665,17 +685,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicCronAutonomousRoute: ApiPublicCronAutonomousRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
