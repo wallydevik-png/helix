@@ -11,6 +11,7 @@ import {
   Sun, Moon,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
+import { Logo } from "@/components/Logo";
 import { setKillSwitch, getDashboard } from "@/lib/trading.functions";
 import { listCredentials } from "@/lib/webauthn.functions";
 import { usePWA, vibrate } from "@/hooks/usePWA";
