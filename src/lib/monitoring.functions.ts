@@ -2,6 +2,80 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// ---------- Execution Health (last 24h) ----------
+
+export const getExecutionHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    const [apiR, ordR, logR, connR] = await Promise.all([
+      supabase.from("api_request_log")
+        .select("status_code,latency_ms,error,path,method,venue,created_at")
+        .eq("user_id", userId).gte("created_at", since).limit(1000),
+      supabase.from("orders")
+        .select("status,slippage_bps,retry_count,submitted_at,filled_at,is_live,execution_venue,created_at")
+        .eq("user_id", userId).gte("created_at", since).limit(1000),
+      supabase.from("execution_log")
+        .select("event,severity,message,created_at")
+        .eq("user_id", userId).gte("created_at", since)
+        .in("severity", ["warn", "error", "critical"])
+        .order("created_at", { ascending: false }).limit(20),
+      supabase.from("exchange_connections")
+        .select("id,label,connector_id,health,clock_skew_ms,last_reconcile_at,trading_enabled")
+        .eq("user_id", userId),
+    ]);
+
+    const apiRows = apiR.data ?? [];
+    const okApi = apiRows.filter(r => (r.status_code ?? 0) < 400);
+    const errApi = apiRows.filter(r => (r.status_code ?? 0) >= 400 || r.error);
+    const latencies = okApi.map(r => r.latency_ms ?? 0).filter(x => x > 0).sort((a, b) => a - b);
+    const p = (q: number) => latencies.length ? latencies[Math.floor(latencies.length * q)] : 0;
+
+    const orders = ordR.data ?? [];
+    const liveOrders = orders.filter(o => o.is_live);
+    const filled = orders.filter(o => o.status === "filled" || o.status === "partially_filled");
+    const errored = orders.filter(o => o.status === "error");
+    const rejected = orders.filter(o => o.status === "rejected");
+    const execLatencies = filled
+      .map(o => (o.submitted_at && o.filled_at)
+        ? new Date(o.filled_at).getTime() - new Date(o.submitted_at).getTime() : 0)
+      .filter(x => x > 0).sort((a, b) => a - b);
+    const pe = (q: number) => execLatencies.length ? execLatencies[Math.floor(execLatencies.length * q)] : 0;
+    const slippages = filled.map(o => Math.abs(Number(o.slippage_bps ?? 0))).filter(x => x > 0).sort((a, b) => a - b);
+    const ps = (q: number) => slippages.length ? slippages[Math.floor(slippages.length * q)] : 0;
+
+    return {
+      api: {
+        total: apiRows.length,
+        ok: okApi.length,
+        errors: errApi.length,
+        errorRate: apiRows.length ? errApi.length / apiRows.length : 0,
+        p50Ms: p(0.5), p95Ms: p(0.95), maxMs: latencies.at(-1) ?? 0,
+      },
+      orders: {
+        total: orders.length,
+        live: liveOrders.length,
+        filled: filled.length,
+        errored: errored.length,
+        rejected: rejected.length,
+        fillRate: orders.length ? filled.length / orders.length : 0,
+        execP50Ms: pe(0.5), execP95Ms: pe(0.95),
+        slippageP50Bps: ps(0.5), slippageP95Bps: ps(0.95),
+      },
+      connections: (connR.data ?? []).map(c => ({
+        id: c.id, label: c.label, connectorId: c.connector_id, health: c.health,
+        clockSkewMs: c.clock_skew_ms, lastReconcileAt: c.last_reconcile_at,
+        tradingEnabled: c.trading_enabled,
+      })),
+      recentIncidents: (logR.data ?? []).map(r => ({
+        event: r.event, severity: r.severity, message: r.message, at: r.created_at,
+      })),
+    };
+  });
+
+
+
 // ---------- Live Monitoring ----------
 
 export const getLiveMonitoring = createServerFn({ method: "GET" })

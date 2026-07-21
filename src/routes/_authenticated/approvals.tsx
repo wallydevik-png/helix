@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader, fmtUsd, fmtNum } from "@/components/AppShell";
 import { listSignals, rejectSignal } from "@/lib/trading.functions";
-import { approveSignalV2 } from "@/lib/assistedLive.functions";
+import { approveSignalV2, listLiveConnections } from "@/lib/assistedLive.functions";
 import { toast } from "sonner";
-import { Check, X, Sliders } from "lucide-react";
+import { Check, X, Sliders, Zap } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
@@ -13,43 +13,48 @@ export const Route = createFileRoute("/_authenticated/approvals")({
   component: Approvals,
 });
 
-const FEE_BPS = 10; // 0.10% paper fee — kept in sync with the paper connector
+const FEE_BPS = 10;
+
+interface LiveConn { id: string; label: string; connector_id: string; max_notional_per_order: number | string | null }
 
 function Approvals() {
   const fetchFn = useServerFn(listSignals);
   const approve = useServerFn(approveSignalV2);
   const reject = useServerFn(rejectSignal);
+  const listConns = useServerFn(listLiveConnections);
   const qc = useQueryClient();
 
   const { data: all = [] } = useQuery({
     queryKey: ["signals"], queryFn: () => fetchFn(), refetchInterval: 10000,
   });
+  const { data: liveConns = [] } = useQuery({
+    queryKey: ["live-connections"], queryFn: () => listConns(),
+  });
   const pending = all.filter(s => s.status === "pending");
 
-  async function onApprove(id: string, modifiedQty?: number) {
+  async function onApprove(id: string, modifiedQty?: number, live?: { connectionId: string }) {
     try {
-      const r = await approve({ data: { signalId: id, modifiedQty } });
-      toast.success(r.partial
+      const r = await approve({ data: {
+        signalId: id, modifiedQty,
+        live: !!live, connectionId: live?.connectionId,
+      } });
+      toast.success((r.isLive ? "LIVE " : "") + (r.partial
         ? `Partial fill @ ${fmtUsd(r.filledPrice)} (${fmtNum(r.filledQty, 6)})`
-        : `Filled @ ${fmtUsd(r.filledPrice)}`);
+        : `Filled @ ${fmtUsd(r.filledPrice)}`));
       qc.invalidateQueries();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Rejected by risk gate"); }
   }
   async function onReject(id: string) {
     try {
       await reject({ data: { signalId: id } });
-      toast.success("Signal rejected");
-      qc.invalidateQueries();
+      toast.success("Signal rejected"); qc.invalidateQueries();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
 
   return (
     <AppShell>
-      <PageHeader
-        title="Assisted Trade Approvals"
-        subtitle="Every AI-proposed trade requires your explicit approval. You can adjust position size before approving."
-      />
-
+      <PageHeader title="Assisted Trade Approvals"
+        subtitle="Every AI trade requires explicit approval. Approve to paper by default, or route to a live exchange." />
       {pending.length === 0 ? (
         <div className="panel p-10 text-center text-muted-foreground text-sm">
           No pending approvals. Generate a signal from the AI Signals page.
@@ -57,7 +62,8 @@ function Approvals() {
       ) : (
         <div className="space-y-4">
           {pending.map(s => (
-            <ApprovalCard key={s.id} signal={s} onApprove={onApprove} onReject={onReject} />
+            <ApprovalCard key={s.id} signal={s} liveConns={liveConns as LiveConn[]}
+              onApprove={onApprove} onReject={onReject} />
           ))}
         </div>
       )}
@@ -75,21 +81,26 @@ interface SignalRow {
 }
 
 function ApprovalCard({
-  signal: s, onApprove, onReject,
+  signal: s, liveConns, onApprove, onReject,
 }: {
   signal: SignalRow;
-  onApprove: (id: string, modQty?: number) => void;
+  liveConns: LiveConn[];
+  onApprove: (id: string, modQty?: number, live?: { connectionId: string }) => void;
   onReject: (id: string) => void;
 }) {
   const [modifying, setModifying] = useState(false);
   const [qty, setQty] = useState<string>(String(s.qty));
   const [showDetail, setShowDetail] = useState(false);
+  const [liveConnId, setLiveConnId] = useState<string>("");
 
   const activeQty = Number(qty) || Number(s.qty);
   const notional = activeQty * Number(s.entry);
   const estFees = notional * (FEE_BPS / 10_000);
   const potentialLoss = Math.abs(Number(s.entry) - Number(s.stop_loss)) * activeQty;
   const potentialGain = Math.abs(Number(s.take_profit) - Number(s.entry)) * activeQty;
+  const selectedConn = liveConns.find(c => c.id === liveConnId);
+  const liveCap = selectedConn ? Number(selectedConn.max_notional_per_order ?? 0) : 0;
+  const overCap = !!selectedConn && liveCap > 0 && notional > liveCap;
 
   return (
     <div className="panel p-5 sm:p-6">
@@ -173,10 +184,40 @@ function ApprovalCard({
         )}
       </div>
 
+      {liveConns.length > 0 && (
+        <div className="mt-4 p-3 rounded-md border border-warning/40 bg-warning/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-3.5 h-3.5 text-warning" />
+            <div className="text-[10px] uppercase font-mono text-warning">Live execution (optional)</div>
+          </div>
+          <select value={liveConnId} onChange={e => setLiveConnId(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-input border border-border font-mono text-xs">
+            <option value="">Paper (default) — no real money</option>
+            {liveConns.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.connector_id.toUpperCase()} · {c.label} · cap ${Number(c.max_notional_per_order ?? 0).toFixed(0)}
+              </option>
+            ))}
+          </select>
+          {overCap && (
+            <div className="mt-2 text-[11px] text-destructive font-mono">
+              Notional ${notional.toFixed(2)} exceeds this connection&apos;s cap ${liveCap.toFixed(2)}.
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-2">
-        <button onClick={() => onApprove(s.id, modifying ? Number(qty) : undefined)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground">
-          <Check className="w-4 h-4" /> Approve {modifying && "modified"}
+        <button
+          onClick={() => onApprove(s.id, modifying ? Number(qty) : undefined,
+            liveConnId ? { connectionId: liveConnId } : undefined)}
+          disabled={overCap}
+          className={`inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium ${
+            liveConnId ? "bg-warning text-warning-foreground" : "bg-success text-success-foreground"
+          } disabled:opacity-50`}
+        >
+          {liveConnId ? <Zap className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+          {liveConnId ? "Approve LIVE" : "Approve"} {modifying && "modified"}
         </button>
         <button onClick={() => setModifying(v => !v)}
           className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-secondary">
