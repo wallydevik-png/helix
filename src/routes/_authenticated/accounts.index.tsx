@@ -6,10 +6,11 @@ import {
   disconnectConnection, listConnections, setPermissions,
   scanConnectionHealth, runConnectorTests,
   enableFullAutopilot, disableFullAutopilot,
+  updateTradingLimits, getSettings,
 } from "@/lib/trading.functions";
 import { getBroker } from "@/lib/connectors/brokerRegistry";
 import { capabilityBadges, getCapabilities } from "@/lib/connectors/capabilities";
-import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle, TestTube2, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Plus, Trash2, Shield, ShieldCheck, Activity, AlertTriangle, TestTube2, CheckCircle2, XCircle, Sparkles, Sliders } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -73,6 +74,9 @@ function Accounts() {
           </Link>
         }
       />
+
+      <TradingLimitsPanel />
+
 
       {isLoading ? (
         <div className="text-muted-foreground">Loading…</div>
