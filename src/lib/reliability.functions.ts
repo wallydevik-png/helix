@@ -280,8 +280,8 @@ export const runSelfCheck = createServerFn({ method: "POST" })
 
     // Market data cache freshness
     const t2 = Date.now();
-    const mdR = await supabase.from("candle_cache").select("cached_at").order("cached_at", { ascending: false }).limit(1).maybeSingle();
-    const mdAge = mdR.data ? (Date.now() - new Date(mdR.data.cached_at).getTime()) / 1000 : Infinity;
+    const mdR = await supabase.from("market_candles").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const mdAge = mdR.data ? (Date.now() - new Date(mdR.data.created_at).getTime()) / 1000 : Infinity;
     results.push({
       component: "market_data",
       status: mdAge < 3600 ? "ok" : mdAge < 86400 ? "warn" : "error",
@@ -291,7 +291,7 @@ export const runSelfCheck = createServerFn({ method: "POST" })
     // AI engine liveness = recent signal activity
     const t3 = Date.now();
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-    const sigR = await supabase.from("ai_signals").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since);
+    const sigR = await supabase.from("signals").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since);
     results.push({
       component: "ai_engine",
       status: (sigR.count ?? 0) > 0 ? "ok" : "warn",
