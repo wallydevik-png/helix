@@ -193,7 +193,7 @@ const verifyAuthentication = createServerFn({ method: "POST" })
       user_id: userId,
       action: "webauthn.verified",
       entity: "webauthn_credentials",
-      metadata: { credential_id: credentialId },
+      metadata: { credential_id: credentialId } as never,
     });
     return { verified: true };
   });
@@ -225,7 +225,7 @@ const removeCredential = createServerFn({ method: "POST" })
       user_id: userId,
       action: "webauthn.removed",
       entity: "webauthn_credentials",
-      metadata: { id: data.id },
+      metadata: { id: data.id } as never,
     });
     return { ok: true };
   });
