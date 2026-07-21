@@ -28,10 +28,27 @@ function Accounts() {
     queryKey: ["connections"], queryFn: () => fetchFn(),
   });
 
+  const autopilotOnFn = useServerFn(enableFullAutopilot);
+  const autopilotOffFn = useServerFn(disableFullAutopilot);
+
   async function togglePerm(id: string, enabled: boolean) {
     try {
       await permFn({ data: { id, tradingEnabled: enabled } });
       toast.success(enabled ? "Trading permission enabled" : "Trading permission revoked");
+      qc.invalidateQueries({ queryKey: ["connections"] });
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  }
+
+  async function toggleAutopilot(id: string, turnOn: boolean) {
+    try {
+      if (turnOn) {
+        if (!confirm("Turn on Full Autopilot?\n\nThe AI will scan markets, generate signals, run risk checks, and place LIVE orders on this account 24/7 until you turn it off. Withdrawals stay disabled — profits remain in your exchange account.")) return;
+        await autopilotOnFn({ data: { connectionId: id } });
+        toast.success("Autopilot ON — the AI is now trading this account.");
+      } else {
+        await autopilotOffFn();
+        toast.success("Autopilot OFF");
+      }
       qc.invalidateQueries({ queryKey: ["connections"] });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
