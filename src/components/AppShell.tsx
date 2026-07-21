@@ -8,7 +8,7 @@ import {
   History, Sliders, BarChart3, Power, LogOut, FlaskConical, Target, Brain,
   Layers, Layers3, SlidersHorizontal, EyeOff, Menu, X, Gauge, Radar, BookOpen, TrendingUp,
   Sparkles, Wallet, Bot, Bell, Rocket, ScrollText, Smartphone, Fingerprint, WifiOff,
-  Sun, Moon, Shield, HeartPulse, Banknote,
+  Sun, Moon, Shield, HeartPulse, Banknote, Globe,
 } from "lucide-react";
 import { unreadNotificationCount } from "@/lib/notifications.functions";
 import { Logo } from "@/components/Logo";
