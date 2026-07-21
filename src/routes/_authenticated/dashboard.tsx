@@ -3,8 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader, Metric, fmtUsd, fmtPct } from "@/components/AppShell";
-import { getDashboard, scanMarketOpportunities, getAiPerformance, listSignals, getLiveEquity } from "@/lib/trading.functions";
-import { Plug, ArrowRight, TrendingUp, TrendingDown, Minus, Sparkles } from "lucide-react";
+import { getDashboard, scanMarketOpportunities, getAiPerformance, listSignals, getLiveEquity, getTradeHistory } from "@/lib/trading.functions";
+import { Plug, ArrowRight, TrendingUp, TrendingDown, Minus, Sparkles, History } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — NeurlX" }, { name: "robots", content: "noindex" }] }),
