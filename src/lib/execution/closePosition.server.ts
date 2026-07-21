@@ -59,8 +59,37 @@ export async function closePositionInternal(
 
   const executionQuality = computeExecutionQuality(realized, pos.side, exitPrice, Number(pos.avg_entry), fees);
 
+  // Attribution: entry order latency + originating signal for indicator contributions.
+  const { data: entryOrder } = await supabase.from("orders")
+    .select("submitted_at,filled_at,slippage_bps")
+    .eq("position_id", pos.id).eq("side", pos.side === "long" ? "buy" : "sell")
+    .order("created_at", { ascending: true }).limit(1).maybeSingle();
+  const execLatencyMs = entryOrder?.submitted_at && entryOrder?.filled_at
+    ? new Date(entryOrder.filled_at).getTime() - new Date(entryOrder.submitted_at).getTime()
+    : null;
+
+  const { data: originatingSig } = await supabase.from("signals")
+    .select("id,contributions,indicators")
+    .eq("user_id", userId).eq("symbol", pos.symbol)
+    .lte("created_at", pos.opened_at)
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+
+  const contribs = (originatingSig?.contributions as Array<{ name: string; weight: number }> | null) ?? [];
+  const winning = realized >= 0;
+  const topContribs = contribs.slice(0, 3).map(c => c.name);
+  const attribution = {
+    winning_indicators: winning ? topContribs : [],
+    losing_indicators: !winning ? topContribs : [],
+    execution_helped: Number(entryOrder?.slippage_bps ?? 0) < 5,
+    market_regime_at_entry: pos.ai_regime,
+    ai_prediction_correct: reason === "take_profit" ? true : reason === "stop_loss" ? false : null,
+  };
+  const predictedOutcome = pos.ai_confidence && Number(pos.ai_confidence) >= 0.6 ? "win" : "uncertain";
+  const actualOutcome = winning ? "win" : "loss";
+
   await supabase.from("trade_journal").insert({
     user_id: userId, position_id: pos.id,
+    signal_id: originatingSig?.id ?? null,
     symbol: pos.symbol, side: pos.side,
     entry_reason: pos.ai_reasoning,
     exit_reason: reason,
@@ -68,14 +97,25 @@ export async function closePositionInternal(
     market_regime: pos.ai_regime,
     entry_price: pos.avg_entry, exit_price: exitPrice,
     qty: pos.qty, realized_pnl: realized, fees_total: fees,
-    slippage_bps_avg: 5,
+    slippage_bps_avg: Number(entryOrder?.slippage_bps ?? 5),
     execution_quality_score: executionQuality,
+    execution_latency_ms: execLatencyMs,
     user_modifications: modsCount ?? 0,
     duration_seconds: durationSec,
     lessons: buildLessons(reason, realized, pos),
     strategy_id: pos.strategy_id,
     model_version: "v0.1-explainable",
+    indicators: originatingSig?.indicators ?? {},
+    attribution,
+    predicted_outcome: predictedOutcome,
+    actual_outcome: actualOutcome,
   });
+
+  // Snapshot capital after each close so the growth curve stays fresh.
+  try {
+    const { snapshotCapitalInternal } = await import("@/lib/liveIntel.functions");
+    await snapshotCapitalInternal(supabase, userId);
+  } catch { /* non-fatal */ }
 
   return { ok: true, realized, exitPrice };
 }
