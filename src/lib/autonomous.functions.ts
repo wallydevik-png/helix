@@ -141,8 +141,7 @@ export async function runAutonomousCycleFor(
       .eq("user_id", userId).maybeSingle();
     if (!c) return finish("live_connection_missing", true);
     if (c.withdrawal_detected) {
-      errors.push("live_blocked: API key has withdrawal permission enabled; autonomous trading requires a trade-only key");
-      return finish("unsafe_api_permissions", true);
+      errors.push("live_permission_warning: previous scan saw withdrawal permission; pre-trade check will rescan before any order can reach the venue");
     }
     if (c.trading_enabled && c.status === "connected" && c.connector_id !== "paper") {
       liveConn = c;
