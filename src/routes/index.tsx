@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
       { title: "NeurlX — AI Paper Trading Platform" },
       { name: "description", content: "Secure AI trading terminal with paper trading, explainable signals, broker connections, and risk-gated execution controls." },
       { property: "og:title", content: "NeurlX — AI Paper Trading Platform" },
-      { property: "og:description", content: "Practice and validate AI trading strategies with encrypted connections, audit trails, and layered risk controls." },
+      { property: "og:description", content: "Secure AI trading terminal with paper trading, explainable signals, broker connections, and risk-gated execution controls." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
