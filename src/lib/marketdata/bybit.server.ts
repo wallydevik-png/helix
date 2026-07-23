@@ -33,7 +33,11 @@ export function createBybitMarketDataProvider(): MarketDataProvider {
         const r = await fetch(`${base}${path}?${qs}`, { headers: { Accept: "application/json" } });
         const text = await r.text();
         if (!r.ok) throw new Error(`Bybit ${label} ${r.status}: ${text.slice(0, 180)}`);
-        return (text ? JSON.parse(text) : {}) as T;
+        const json = (text ? JSON.parse(text) : {}) as T & { retCode?: number; retMsg?: string };
+        if (typeof json.retCode === "number" && json.retCode !== 0) {
+          throw new Error(`Bybit ${label} rejected: ${json.retMsg || json.retCode}`);
+        }
+        return json as T;
       } catch (e) {
         lastError = e;
       }

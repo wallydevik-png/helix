@@ -31,6 +31,13 @@ function toBybit(symbol: string): string {
   return `${b}${q === "USD" ? "USDT" : q}`;
 }
 
+function ensureBybitOk<T extends { retCode?: number; retMsg?: string }>(response: T, label: string): T {
+  if (typeof response.retCode === "number" && response.retCode !== 0) {
+    throw new Error(`Bybit ${label} rejected: ${response.retMsg || response.retCode}`);
+  }
+  return response;
+}
+
 export function createBybitConnector(
   credentials: Record<string, string>,
   ctx: { supabase?: SupabaseClient; userId?: string; connectionId?: string | null; orderId?: string | null } = {},
@@ -51,11 +58,11 @@ export function createBybitConnector(
     let lastError: unknown = null;
     for (const base of BYBIT_BASE_URLS) {
       try {
-        return await doRequest<T>({
+        return ensureBybitOk(await doRequest<T & { retCode?: number; retMsg?: string }>({
           ctx: logCtx, method: "GET",
           url: `${base}${path}${qs ? "?" + qs : ""}`,
           path, params,
-        });
+        }), path) as T;
       } catch (e) {
         lastError = e;
       }
@@ -70,7 +77,7 @@ export function createBybitConnector(
     for (const base of BYBIT_BASE_URLS) {
       try {
         const { ts, sig } = await sign(qs);
-        return await doRequest<T>({
+        return ensureBybitOk(await doRequest<T & { retCode?: number; retMsg?: string }>({
           ctx: logCtx, method: "GET", path,
           url: `${base}${path}${qs ? "?" + qs : ""}`,
           headers: {
@@ -78,7 +85,7 @@ export function createBybitConnector(
             "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
           },
           params, signed: true,
-        });
+        }), path) as T;
       } catch (e) {
         lastError = e;
       }
@@ -93,7 +100,7 @@ export function createBybitConnector(
     for (const base of BYBIT_BASE_URLS) {
       try {
         const { ts, sig } = await sign(raw);
-        return await doRequest<T>({
+        return ensureBybitOk(await doRequest<T & { retCode?: number; retMsg?: string }>({
           ctx: logCtx, method: "POST", path, url: `${base}${path}`,
           headers: {
             "Content-Type": "application/json",
@@ -101,7 +108,7 @@ export function createBybitConnector(
             "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
           },
           body: raw, params: body, signed: true,
-        });
+        }), path) as T;
       } catch (e) {
         lastError = e;
       }
