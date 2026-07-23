@@ -118,6 +118,8 @@ export async function runPreTradeCheck(
   // 4. Symbol filter
   let adjustedQty = input.qty;
   let minNotional: number | undefined;
+  let stepSize: number | undefined;
+  let minQty: number | undefined;
   if (connector.getSymbolFilter) {
     const f = await connector.getSymbolFilter(input.symbol);
     if (!f) {
@@ -126,6 +128,8 @@ export async function runPreTradeCheck(
       return { ok: false, reason: msg };
     }
     minNotional = f.minNotional;
+    stepSize = f.stepSize;
+    minQty = f.minQty;
     if (f.stepSize) adjustedQty = Math.floor(input.qty / f.stepSize) * f.stepSize;
     if (adjustedQty < f.minQty) {
       const msg = `Quantity ${adjustedQty} below venue minimum ${f.minQty}.`;
@@ -139,8 +143,11 @@ export async function runPreTradeCheck(
     }
   }
 
-  // 5. Balance
+  // 5. Balance. For live spot, resize to the available funds when possible
+  // instead of rejecting a valid smaller order. This keeps autopilot active on
+  // small accounts while preserving venue min-qty/min-notional constraints.
   let availableUsd = 0;
+  const baseAsset = input.symbol.includes("-") ? input.symbol.split("-")[0].toUpperCase() : input.symbol.replace(/USDT$|USD$|USDC$/, "").toUpperCase();
   if (input.side === "buy") {
     try {
       const balances = await connector.getBalances();
@@ -148,12 +155,44 @@ export async function runPreTradeCheck(
       availableUsd = usdish?.available ?? 0;
       const need = adjustedQty * input.estPrice * 1.005; // 0.5% headroom for fees/slippage
       if (need > availableUsd) {
-        const msg = `Insufficient balance: need $${need.toFixed(2)}, have $${availableUsd.toFixed(2)}.`;
-        await logDecision(supabase, userId, input.connectionId, false, msg, { need, availableUsd });
-        return { ok: false, reason: msg };
+        let resizedQty = availableUsd / (input.estPrice * 1.005);
+        if (stepSize) resizedQty = Math.floor(resizedQty / stepSize) * stepSize;
+        resizedQty = Number(resizedQty.toFixed(8));
+        const resizedNotional = resizedQty * input.estPrice;
+        if (resizedQty > 0 && (!minQty || resizedQty >= minQty) && (!minNotional || resizedNotional >= minNotional)) {
+          adjustedQty = resizedQty;
+        } else {
+          const minNeeded = minNotional ? ` Minimum venue notional is $${minNotional.toFixed(2)}.` : "";
+          const msg = `Insufficient live balance: need up to $${need.toFixed(2)}, have $${availableUsd.toFixed(2)}.${minNeeded}`;
+          await logDecision(supabase, userId, input.connectionId, false, msg, { need, availableUsd, minNotional, resizedQty });
+          return { ok: false, reason: msg };
+        }
       }
     } catch (e) {
       const msg = `Balance check failed: ${e instanceof Error ? e.message : String(e)}`;
+      await logDecision(supabase, userId, input.connectionId, false, msg, {});
+      return { ok: false, reason: msg };
+    }
+  } else {
+    try {
+      const balances = await connector.getBalances();
+      const base = balances.find(b => b.currency.toUpperCase() === baseAsset);
+      const availableBase = base?.available ?? 0;
+      if (adjustedQty > availableBase) {
+        let resizedQty = availableBase;
+        if (stepSize) resizedQty = Math.floor(resizedQty / stepSize) * stepSize;
+        resizedQty = Number(resizedQty.toFixed(8));
+        const resizedNotional = resizedQty * input.estPrice;
+        if (resizedQty > 0 && (!minQty || resizedQty >= minQty) && (!minNotional || resizedNotional >= minNotional)) {
+          adjustedQty = resizedQty;
+        } else {
+          const msg = `Insufficient ${baseAsset} balance to sell: need ${adjustedQty}, have ${availableBase}.`;
+          await logDecision(supabase, userId, input.connectionId, false, msg, { adjustedQty, availableBase, baseAsset, minNotional });
+          return { ok: false, reason: msg };
+        }
+      }
+    } catch (e) {
+      const msg = `Base-asset balance check failed: ${e instanceof Error ? e.message : String(e)}`;
       await logDecision(supabase, userId, input.connectionId, false, msg, {});
       return { ok: false, reason: msg };
     }

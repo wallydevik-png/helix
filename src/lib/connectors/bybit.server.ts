@@ -176,6 +176,7 @@ export function createBybitConnector(
         side: input.side === "buy" ? "Buy" : "Sell",
         orderType: input.orderType === "market" ? "Market" : "Limit",
         qty: String(input.qty),
+        ...(input.orderType === "market" && input.side === "buy" ? { marketUnit: "baseCoin" } : {}),
         ...(input.limitPrice ? { price: String(input.limitPrice) } : {}),
         ...(input.clientOrderId ? { orderLinkId: input.clientOrderId } : {}),
       };
