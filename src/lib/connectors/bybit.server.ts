@@ -224,6 +224,22 @@ export function createBybitConnector(
       }));
     },
 
+    async getSymbolFilter(symbol: string) {
+      const s = toBybit(symbol);
+      const r = await publicGet<{ result?: { list?: Array<{
+        priceFilter?: { tickSize?: string };
+        lotSizeFilter?: { basePrecision?: string; minOrderQty?: string; minOrderAmt?: string };
+      }> } }>("/v5/market/instruments-info", { category: "spot", symbol: s });
+      const info = r.result?.list?.[0];
+      if (!info) return null;
+      return {
+        minQty: Number(info.lotSizeFilter?.minOrderQty || 0),
+        stepSize: Number(info.lotSizeFilter?.basePrecision || 0),
+        tickSize: Number(info.priceFilter?.tickSize || 0),
+        minNotional: Number(info.lotSizeFilter?.minOrderAmt || 0),
+      };
+    },
+
     async checkHealth(): Promise<ConnectionHealth> {
       const t0 = Date.now();
       try {
