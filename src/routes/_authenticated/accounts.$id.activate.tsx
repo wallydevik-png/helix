@@ -49,7 +49,6 @@ function Activate() {
   const [maxNotional, setMaxNotional] = useState<string>(
     String(settings?.live_max_notional_per_order ?? 50),
   );
-  const [ackWithdrawal, setAckWithdrawal] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [activating, setActivating] = useState(false);
 
@@ -83,7 +82,6 @@ function Activate() {
         connectionId: id,
         confirmationPhrase: phrase,
         maxNotionalPerOrder: Number(maxNotional),
-        acknowledgedWithdrawal: ackWithdrawal,
       }});
       toast.success(r.message);
       qc.invalidateQueries();
@@ -109,9 +107,11 @@ function Activate() {
   }
 
   const canActivate = scan
+    && scan.can_read
+    && scan.can_trade
     && phrase === "ENABLE LIVE TRADING"
     && Number(maxNotional) > 0
-    && (!scan.can_withdraw || ackWithdrawal);
+    && !scan.can_withdraw;
 
   return (
     <AppShell>
@@ -192,12 +192,8 @@ function Activate() {
                   <div className="font-medium text-destructive">Withdrawal permission detected</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Regenerate this API key on the exchange with withdrawals <b>disabled</b>, then re-scan.
-                    Or acknowledge the risk to proceed anyway.
+                    NeurlX will not activate live trading for withdrawal-enabled keys.
                   </p>
-                  <label className="mt-2 flex items-center gap-2 text-xs">
-                    <input type="checkbox" checked={ackWithdrawal} onChange={e => setAckWithdrawal(e.target.checked)} />
-                    I understand this key can withdraw funds and accept the risk.
-                  </label>
                 </div>
               </div>
             </div>
