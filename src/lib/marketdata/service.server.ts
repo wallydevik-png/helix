@@ -18,10 +18,10 @@ export function listSupportedSymbols(): string[] {
   return listSymbols();
 }
 
-function providerFor(symbol: string): MarketDataProvider {
-  const p = providers.find(p => p.supports(symbol));
-  if (!p) throw new Error(`No market-data provider for ${symbol}`);
-  return p;
+function providersFor(symbol: string): MarketDataProvider[] {
+  const supported = providers.filter(p => p.supports(symbol));
+  if (!supported.length) throw new Error(`No market-data provider for ${symbol}`);
+  return supported;
 }
 
 export async function fetchCandles(
@@ -30,21 +30,36 @@ export async function fetchCandles(
   interval: Interval,
   limit = 200,
 ): Promise<Candle[]> {
-  const provider = providerFor(symbol);
-  const candles = await provider.getCandles(symbol, interval, limit);
-  // Best-effort persistence — never block signal generation on cache write.
-  if (supabase && candles.length) {
-    // Only write the most recent bar per call to keep the table bounded.
-    const latest = candles[candles.length - 1];
-    supabase.from("market_candles").upsert({
-      symbol, interval, ts: new Date(latest.ts).toISOString(),
-      open: latest.open, high: latest.high, low: latest.low,
-      close: latest.close, volume: latest.volume, source: provider.id,
-    }, { onConflict: "symbol,interval,ts,source" }).then(() => {}, () => {});
+  let lastError: unknown = null;
+  for (const provider of providersFor(symbol)) {
+    try {
+      const candles = await provider.getCandles(symbol, interval, limit);
+      // Best-effort persistence — never block signal generation on cache write.
+      if (supabase && candles.length) {
+        // Only write the most recent bar per call to keep the table bounded.
+        const latest = candles[candles.length - 1];
+        supabase.from("market_candles").upsert({
+          symbol, interval, ts: new Date(latest.ts).toISOString(),
+          open: latest.open, high: latest.high, low: latest.low,
+          close: latest.close, volume: latest.volume, source: provider.id,
+        }, { onConflict: "symbol,interval,ts,source" }).then(() => {}, () => {});
+      }
+      return candles;
+    } catch (e) {
+      lastError = e;
+    }
   }
-  return candles;
+  throw lastError instanceof Error ? lastError : new Error(`No market-data provider succeeded for ${symbol}`);
 }
 
 export async function fetchLastPrice(symbol: string): Promise<number> {
-  return providerFor(symbol).getLastPrice(symbol);
+  let lastError: unknown = null;
+  for (const provider of providersFor(symbol)) {
+    try {
+      return await provider.getLastPrice(symbol);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`No market-data provider succeeded for ${symbol}`);
 }

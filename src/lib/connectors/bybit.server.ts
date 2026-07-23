@@ -13,7 +13,16 @@ import type {
 import { hmacSha256Hex } from "./signing.server";
 import { doRequest } from "./rest.server";
 
-const BASE = "https://api.bybit.com";
+// Rotate through Bybit's official API hosts. Some edge regions receive a
+// CloudFront 403 from the primary host, which was stopping live autopilot
+// before it could even price or submit a trade.
+const BYBIT_BASE_URLS = [
+  "https://api.bybit.com",
+  "https://api.bytick.com",
+  "https://api.bybit.nl",
+  "https://api.bybit.kz",
+  "https://api.bybit-tr.com",
+];
 const RECV = "5000";
 
 function toBybit(symbol: string): string {
@@ -38,38 +47,66 @@ export function createBybitConnector(
   }
 
   async function publicGet<T>(path: string, params?: Record<string, string>): Promise<T> {
-    const url = `${BASE}${path}${params ? "?" + new URLSearchParams(params) : ""}`;
-    return doRequest<T>({ ctx: logCtx, method: "GET", url, path, params });
+    const qs = params ? new URLSearchParams(params).toString() : "";
+    let lastError: unknown = null;
+    for (const base of BYBIT_BASE_URLS) {
+      try {
+        return await doRequest<T>({
+          ctx: logCtx, method: "GET",
+          url: `${base}${path}${qs ? "?" + qs : ""}`,
+          path, params,
+        });
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Bybit public API unavailable");
   }
 
   async function signedGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
     if (!hasKeys) throw new Error("Bybit API keys required for signed endpoints");
     const qs = new URLSearchParams(params).toString();
-    const { ts, sig } = await sign(qs);
-    return doRequest<T>({
-      ctx: logCtx, method: "GET", path,
-      url: `${BASE}${path}${qs ? "?" + qs : ""}`,
-      headers: {
-        "X-BAPI-API-KEY": apiKey, "X-BAPI-TIMESTAMP": ts,
-        "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
-      },
-      params, signed: true,
-    });
+    let lastError: unknown = null;
+    for (const base of BYBIT_BASE_URLS) {
+      try {
+        const { ts, sig } = await sign(qs);
+        return await doRequest<T>({
+          ctx: logCtx, method: "GET", path,
+          url: `${base}${path}${qs ? "?" + qs : ""}`,
+          headers: {
+            "X-BAPI-API-KEY": apiKey, "X-BAPI-TIMESTAMP": ts,
+            "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
+          },
+          params, signed: true,
+        });
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Bybit signed API unavailable");
   }
 
   async function signedPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
     if (!hasKeys) throw new Error("Bybit API keys required for signed endpoints");
     const raw = JSON.stringify(body);
-    const { ts, sig } = await sign(raw);
-    return doRequest<T>({
-      ctx: logCtx, method: "POST", path, url: `${BASE}${path}`,
-      headers: {
-        "Content-Type": "application/json",
-        "X-BAPI-API-KEY": apiKey, "X-BAPI-TIMESTAMP": ts,
-        "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
-      },
-      body: raw, params: body, signed: true,
-    });
+    let lastError: unknown = null;
+    for (const base of BYBIT_BASE_URLS) {
+      try {
+        const { ts, sig } = await sign(raw);
+        return await doRequest<T>({
+          ctx: logCtx, method: "POST", path, url: `${base}${path}`,
+          headers: {
+            "Content-Type": "application/json",
+            "X-BAPI-API-KEY": apiKey, "X-BAPI-TIMESTAMP": ts,
+            "X-BAPI-RECV-WINDOW": RECV, "X-BAPI-SIGN": sig,
+          },
+          body: raw, params: body, signed: true,
+        });
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Bybit signed API unavailable");
   }
 
   return {
@@ -88,13 +125,30 @@ export function createBybitConnector(
 
     async getBalances(): Promise<Balance[]> {
       if (!hasKeys) return [];
-      const r = await signedGet<{ result: { list: Array<{ coin: Array<{ coin: string; walletBalance: string; availableToWithdraw: string }> }> } }>(
+      const r = await signedGet<{ result: { list: Array<{
+        totalAvailableBalance?: string;
+        totalWalletBalance?: string;
+        coin: Array<{ coin: string; walletBalance?: string; availableToWithdraw?: string; equity?: string; usdValue?: string }>;
+      }> } }>(
         "/v5/account/wallet-balance", { accountType: "UNIFIED" },
       );
-      const coins = r.result?.list?.[0]?.coin ?? [];
-      return coins.map(c => ({
-        currency: c.coin, total: Number(c.walletBalance || 0), available: Number(c.availableToWithdraw || c.walletBalance || 0),
-      })).filter(b => b.total > 0);
+      const account = r.result?.list?.[0];
+      const coins = account?.coin ?? [];
+      const balances = coins.map(c => ({
+        currency: c.coin,
+        total: Number(c.walletBalance || c.equity || 0),
+        available: Number(c.availableToWithdraw || c.walletBalance || c.equity || 0),
+      })).filter(b => b.total > 0 || b.available > 0);
+      const availableUsd = Number(account?.totalAvailableBalance || 0);
+      const walletUsd = Number(account?.totalWalletBalance || availableUsd || 0);
+      const usdish = balances.find(b => b.currency === "USDT" || b.currency === "USD" || b.currency === "USDC");
+      if (availableUsd > 0 && usdish) {
+        usdish.available = Math.max(usdish.available, availableUsd);
+        usdish.total = Math.max(usdish.total, walletUsd, availableUsd);
+      } else if (availableUsd > 0 || walletUsd > 0) {
+        balances.push({ currency: "USDT", total: Math.max(walletUsd, availableUsd), available: availableUsd });
+      }
+      return balances;
     },
 
     async getQuote(symbol: string): Promise<Quote> {
@@ -187,7 +241,9 @@ export function createBybitConnector(
           enableWithdrawals: flat.has("Withdraw"),
           raw: r.result,
         };
-      } catch { return { enableReading: true, enableSpotAndMarginTrading: false, enableWithdrawals: false }; }
+      } catch (e) {
+        throw new Error(`Bybit permission check failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
     },
   };
 }
