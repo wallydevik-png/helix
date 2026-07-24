@@ -147,6 +147,18 @@ async function recordFailure(supabase: SupabaseClient, userId: string, kind: "fa
   }
 }
 
+function shouldCountPreTradeRejection(reason?: string): boolean {
+  if (!reason) return true;
+  const r = reason.toLowerCase();
+  // Not dangerous — the venue simply cannot fund that order. Counting this as
+  // a day-ending live safety failure made healthy accounts look inactive after
+  // a few sizing/balance mismatches.
+  if (r.includes("insufficient tradable stablecoin balance") || r.includes("insufficient live balance") || r.includes("insufficient ") && r.includes(" balance to sell")) {
+    return false;
+  }
+  return true;
+}
+
 async function recordSuccess(supabase: SupabaseClient, userId: string) {
   await supabase.from("automation_settings")
     .update({ live_consecutive_failures: 0 })
@@ -250,7 +262,9 @@ export async function submitOrder(
       await supabase.from("orders").update({
         status: "rejected", error_message: pre.reason,
       }).eq("id", orderRow.id);
-      await recordFailure(supabase, userId, "rejection");
+      if (shouldCountPreTradeRejection(pre.reason)) {
+        await recordFailure(supabase, userId, "rejection");
+      }
       const { emitNotification } = await import("@/lib/notifications/emit.server");
       await emitNotification(supabase, userId, {
         kind: "trade.rejected", severity: "warning",

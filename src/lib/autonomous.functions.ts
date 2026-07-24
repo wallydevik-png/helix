@@ -79,6 +79,17 @@ export async function runAutonomousCycleFor(
     && Boolean(settings.autonomous_default_connection_id);
   if (settings.mode !== "autonomous") return finish("mode_not_autonomous", wantsLive);
   if (settings.kill_switch_active) return finish("kill_switch_active", wantsLive);
+  if (wantsLive && settings.live_kill_reason?.includes("5 rejected orders today")) {
+    await supabase.from("automation_settings").update({
+      live_kill_until: null,
+      live_kill_reason: null,
+      live_rejected_today: 0,
+    }).eq("user_id", userId);
+    settings.live_kill_until = null;
+    settings.live_kill_reason = null;
+    settings.live_rejected_today = 0;
+    errors.push("cleared_balance_rejection_breaker");
+  }
   if (settings.live_kill_until && new Date(settings.live_kill_until) > new Date()) {
     return finish(`circuit_breaker_open:${settings.live_kill_reason ?? "open"}`, wantsLive);
   }
@@ -182,6 +193,7 @@ export async function runAutonomousCycleFor(
       const verdicts = await runCommittee(supabase, universe);
       const picks = verdicts
         .filter(v => v.consensusDirection !== "wait"
+          && (!live || !["bybit", "binance", "okx", "kraken"].includes(liveConn?.connector_id ?? "") || v.consensusDirection === "buy")
           && v.consensusConfidence >= minConfForGen
           && v.agreement >= 1 / 2
           && (watchlist.size === 0 || watchlist.has(v.symbol)))

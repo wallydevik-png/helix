@@ -17,11 +17,16 @@ import { doRequest } from "./rest.server";
 // CloudFront 403 from the primary host, which was stopping live autopilot
 // before it could even price or submit a trade.
 const BYBIT_BASE_URLS = [
-  "https://api.bybit.com",
+  // Try non-US/regional Bybit hosts first. The primary .com host can return
+  // CloudFront country blocks from some server regions, even when the user's
+  // own country is allowed.
   "https://api.bytick.com",
-  "https://api.bybit.nl",
   "https://api.bybit.kz",
   "https://api.bybit-tr.com",
+  "https://api.bybit.nl",
+  "https://api.bybitgeorgia.ge",
+  "https://api.bybit.ae",
+  "https://api.bybit.com",
 ];
 const RECV = "5000";
 
@@ -36,6 +41,17 @@ function ensureBybitOk<T extends { retCode?: number; retMsg?: string }>(response
     throw new Error(`Bybit ${label} rejected: ${response.retMsg || response.retCode}`);
   }
   return response;
+}
+
+function numericCandidate(value: string | number | undefined | null): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function maxPositive(...values: Array<string | number | undefined | null>): number {
+  const nums = values.map(numericCandidate).filter((n): n is number => n !== null && n > 0);
+  return nums.length ? Math.max(...nums) : 0;
 }
 
 export function createBybitConnector(
@@ -135,17 +151,34 @@ export function createBybitConnector(
       const r = await signedGet<{ result: { list: Array<{
         totalAvailableBalance?: string;
         totalWalletBalance?: string;
-        coin: Array<{ coin: string; walletBalance?: string; availableToWithdraw?: string; equity?: string; usdValue?: string }>;
+        coin: Array<{
+          coin: string;
+          walletBalance?: string;
+          availableToWithdraw?: string;
+          equity?: string;
+          usdValue?: string;
+          free?: string;
+          locked?: string;
+        }>;
       }> } }>(
         "/v5/account/wallet-balance", { accountType: "UNIFIED" },
       );
       const account = r.result?.list?.[0];
       const coins = account?.coin ?? [];
-      const balances = coins.map(c => ({
-        currency: c.coin,
-        total: Number(c.walletBalance || c.equity || 0),
-        available: Number(c.availableToWithdraw || c.walletBalance || c.equity || 0),
-      })).filter(b => b.total > 0 || b.available > 0);
+      const balances = coins.map(c => {
+        const wallet = numericCandidate(c.walletBalance) ?? 0;
+        const equity = numericCandidate(c.equity) ?? wallet;
+        const locked = numericCandidate(c.locked) ?? 0;
+        const free = numericCandidate(c.free);
+        const withdrawable = numericCandidate(c.availableToWithdraw);
+        const total = maxPositive(wallet, equity, c.usdValue && ["USD", "USDT", "USDC"].includes(c.coin.toUpperCase()) ? c.usdValue : null);
+        // Bybit often returns availableToWithdraw: "0" for Unified accounts even
+        // when the coin is tradable. Do not let that zero mask wallet/free funds.
+        const spendableFromWallet = Math.max(0, wallet - locked);
+        const spendableFromEquity = Math.max(0, equity - locked);
+        const available = maxPositive(withdrawable, free, spendableFromWallet, spendableFromEquity, total);
+        return { currency: c.coin, total, available };
+      }).filter(b => b.total > 0 || b.available > 0);
       const availableUsd = Number(account?.totalAvailableBalance || 0);
       const walletUsd = Number(account?.totalWalletBalance || availableUsd || 0);
       const usdish = balances.find(b => b.currency === "USDT" || b.currency === "USD" || b.currency === "USDC");

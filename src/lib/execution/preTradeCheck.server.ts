@@ -151,8 +151,8 @@ export async function runPreTradeCheck(
   if (input.side === "buy") {
     try {
       const balances = await connector.getBalances();
-      const usdish = balances.find(b => b.currency === "USDT" || b.currency === "USD" || b.currency === "USDC");
-      availableUsd = usdish?.available ?? 0;
+      const stableBalances = balances.filter(b => b.currency === "USDT" || b.currency === "USD" || b.currency === "USDC");
+      availableUsd = stableBalances.reduce((sum, b) => sum + Math.max(0, b.available), 0);
       const need = adjustedQty * input.estPrice * 1.005; // 0.5% headroom for fees/slippage
       if (need > availableUsd) {
         let resizedQty = availableUsd / (input.estPrice * 1.005);
@@ -163,7 +163,7 @@ export async function runPreTradeCheck(
           adjustedQty = resizedQty;
         } else {
           const minNeeded = minNotional ? ` Minimum venue notional is $${minNotional.toFixed(2)}.` : "";
-          const msg = `Insufficient live balance: need up to $${need.toFixed(2)}, have $${availableUsd.toFixed(2)}.${minNeeded}`;
+          const msg = `Insufficient tradable stablecoin balance: need up to $${need.toFixed(2)}, have $${availableUsd.toFixed(2)}.${minNeeded}`;
           await logDecision(supabase, userId, input.connectionId, false, msg, { need, availableUsd, minNotional, resizedQty });
           return { ok: false, reason: msg };
         }
