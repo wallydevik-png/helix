@@ -204,6 +204,30 @@ export async function runAutonomousCycleFor(
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false }).limit(20);
 
+  const canFundLiveSignal = (symbol: string, side: "buy" | "sell") => {
+    if (!live) return true;
+    if (side === "buy") return liveStableUsd > 1;
+    const base = symbol.includes("-") ? symbol.split("-")[0].toUpperCase() : symbol.replace(/USDT$|USD$|USDC$/, "").toUpperCase();
+    return (liveBaseAvailable.get(base) ?? 0) > 0;
+  };
+
+  if (live && signals?.length) {
+    const fundable = [];
+    for (const sig of signals) {
+      const side = sig.side as "buy" | "sell";
+      if (canFundLiveSignal(sig.symbol, side)) {
+        fundable.push(sig);
+      } else {
+        rejected++;
+        bump(rejectReasons, side === "buy" ? "wallet:no_stablecoin_available" : `wallet:no_${sig.symbol.split("-")[0] ?? "base"}_available`);
+        await supabase.from("signals").update({
+          status: "rejected", resolved_at: new Date().toISOString(),
+        }).eq("id", sig.id);
+      }
+    }
+    signals = fundable;
+  }
+
   if ((!signals || signals.length === 0) && capacity > 0) {
     try {
       const { runCommittee } = await import("@/lib/trading/committee.server");
@@ -217,10 +241,8 @@ export async function runAutonomousCycleFor(
       ]));
       const verdicts = await runCommittee(supabase, universe);
       const canFundVerdict = (symbol: string, side: "buy" | "sell" | "wait") => {
-        if (!live || side === "wait") return true;
-        if (side === "buy") return liveStableUsd > 1;
-        const base = symbol.includes("-") ? symbol.split("-")[0].toUpperCase() : symbol.replace(/USDT$|USD$|USDC$/, "").toUpperCase();
-        return (liveBaseAvailable.get(base) ?? 0) > 0;
+        if (side === "wait") return true;
+        return canFundLiveSignal(symbol, side);
       };
 
       const picks = verdicts
@@ -241,7 +263,7 @@ export async function runAutonomousCycleFor(
         ? Math.min(Number(settings.max_trade_size ?? 500), Number(settings.live_max_notional_per_order ?? 500))
         : Number(settings.max_trade_size ?? 500);
 
-      const toInsert = picks.map(v => {
+      const toInsert = picks.flatMap(v => {
         let scaledQty = 0;
         if (live && v.consensusDirection === "buy") {
           const targetNotional = Math.max(1, Math.min(capForSize * 0.95, liveStableUsd * 0.9));
@@ -254,8 +276,8 @@ export async function runAutonomousCycleFor(
           const targetNotional = Math.max(1, capForSize * 0.95); // 5% headroom under cap
           scaledQty = +(targetNotional / v.base.entry).toFixed(6);
         }
-        if (scaledQty <= 0) return null;
-        return {
+        if (scaledQty <= 0) return [];
+        return [{
         user_id: userId,
         symbol: v.symbol, side: v.consensusDirection as "buy" | "sell",
         entry: v.base.entry, stop_loss: v.base.stopLoss, take_profit: v.base.takeProfit,
@@ -272,8 +294,8 @@ export async function runAutonomousCycleFor(
           weight: vt.confidence, detail: vt.rationale,
         }))] as unknown as Record<string, never>,
         risk_factors: v.base.riskFactors as unknown as Record<string, never>,
-        };
-      }).filter((row): row is NonNullable<typeof row> => row !== null);
+        }];
+      });
       if (toInsert.length) {
         const { data: inserted } = await supabase.from("signals")
           .insert(toInsert).select();
