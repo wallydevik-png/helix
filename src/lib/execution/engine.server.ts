@@ -156,6 +156,9 @@ function shouldCountPreTradeRejection(reason?: string): boolean {
   if (r.includes("insufficient tradable stablecoin balance") || r.includes("insufficient live balance") || r.includes("insufficient ") && r.includes(" balance to sell")) {
     return false;
   }
+  if (r.includes("cloudfront") || r.includes("block access from your country") || r.includes("u.s ip") || r.includes("us ip")) {
+    return false;
+  }
   return true;
 }
 
@@ -250,14 +253,19 @@ export async function submitOrder(
 
   // 5. Live pre-trade check (skipped for paper — riskGate already ran)
   if (isLive) {
-    const q = await connector.getQuote(req.symbol);
-    const estPrice = req.side === "buy" ? q.ask : q.bid;
-    const { runPreTradeCheck } = await import("@/lib/execution/preTradeCheck.server");
-    const pre = await runPreTradeCheck(supabase, userId, connector, {
-      symbol: req.symbol, side: req.side, qty: req.qty, estPrice,
-      stopLoss: req.stopLoss ?? null, takeProfit: req.takeProfit ?? null,
-      connectionId: req.connectionId!,
-    });
+    let pre: { ok: boolean; reason?: string; adjustments?: { qty?: number } };
+    try {
+      const q = await connector.getQuote(req.symbol);
+      const estPrice = req.side === "buy" ? q.ask : q.bid;
+      const { runPreTradeCheck } = await import("@/lib/execution/preTradeCheck.server");
+      pre = await runPreTradeCheck(supabase, userId, connector, {
+        symbol: req.symbol, side: req.side, qty: req.qty, estPrice,
+        stopLoss: req.stopLoss ?? null, takeProfit: req.takeProfit ?? null,
+        connectionId: req.connectionId!,
+      });
+    } catch (e) {
+      pre = { ok: false, reason: e instanceof Error ? e.message : String(e) };
+    }
     if (!pre.ok) {
       await supabase.from("orders").update({
         status: "rejected", error_message: pre.reason,
