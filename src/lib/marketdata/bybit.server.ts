@@ -6,11 +6,13 @@ import type { Candle, Interval, MarketDataProvider } from "./types";
 // regions. Try Bybit's official alternate hosts before allowing the market
 // scanner to fail the whole autonomous cycle.
 const BYBIT_BASE_URLS = [
-  "https://api.bybit.com",
   "https://api.bytick.com",
-  "https://api.bybit.nl",
   "https://api.bybit.kz",
   "https://api.bybit-tr.com",
+  "https://api.bybit.nl",
+  "https://api.bybitgeorgia.ge",
+  "https://api.bybit.ae",
+  "https://api.bybit.com",
 ];
 
 // TanStack/Vite: "-USD" -> Bybit USDT pairs

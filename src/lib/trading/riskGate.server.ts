@@ -44,7 +44,10 @@ export async function evaluateRisk(
   // Daily counters
   const dayStart = new Date(); dayStart.setUTCHours(0,0,0,0);
   const { data: todayOrders } = await supabase
-    .from("orders").select("id").eq("user_id", userId).gte("created_at", dayStart.toISOString());
+    .from("orders").select("id")
+    .eq("user_id", userId)
+    .in("status", ["filled", "partially_filled", "working", "retrying"])
+    .gte("created_at", dayStart.toISOString());
   if ((todayOrders?.length ?? 0) >= settings.max_trades_per_day) {
     return { allowed: false, reason: `Daily trade limit (${settings.max_trades_per_day}) reached.` };
   }

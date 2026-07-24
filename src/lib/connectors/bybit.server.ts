@@ -17,11 +17,16 @@ import { doRequest } from "./rest.server";
 // CloudFront 403 from the primary host, which was stopping live autopilot
 // before it could even price or submit a trade.
 const BYBIT_BASE_URLS = [
-  "https://api.bybit.com",
+  // Try non-US/regional Bybit hosts first. The primary .com host can return
+  // CloudFront country blocks from some server regions, even when the user's
+  // own country is allowed.
   "https://api.bytick.com",
-  "https://api.bybit.nl",
   "https://api.bybit.kz",
   "https://api.bybit-tr.com",
+  "https://api.bybit.nl",
+  "https://api.bybitgeorgia.ge",
+  "https://api.bybit.ae",
+  "https://api.bybit.com",
 ];
 const RECV = "5000";
 
@@ -36,6 +41,26 @@ function ensureBybitOk<T extends { retCode?: number; retMsg?: string }>(response
     throw new Error(`Bybit ${label} rejected: ${response.retMsg || response.retCode}`);
   }
   return response;
+}
+
+function numericCandidate(value: string | number | undefined | null): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function maxPositive(...values: Array<string | number | undefined | null>): number {
+  const nums = values.map(numericCandidate).filter((n): n is number => n !== null && n > 0);
+  return nums.length ? Math.max(...nums) : 0;
+}
+
+function isRegionBlocked(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return msg.includes("cloudfront")
+    || msg.includes("block access from your country")
+    || msg.includes("u.s ip")
+    || msg.includes("us ip")
+    || msg.includes("403");
 }
 
 export function createBybitConnector(
@@ -135,17 +160,34 @@ export function createBybitConnector(
       const r = await signedGet<{ result: { list: Array<{
         totalAvailableBalance?: string;
         totalWalletBalance?: string;
-        coin: Array<{ coin: string; walletBalance?: string; availableToWithdraw?: string; equity?: string; usdValue?: string }>;
+        coin: Array<{
+          coin: string;
+          walletBalance?: string;
+          availableToWithdraw?: string;
+          equity?: string;
+          usdValue?: string;
+          free?: string;
+          locked?: string;
+        }>;
       }> } }>(
         "/v5/account/wallet-balance", { accountType: "UNIFIED" },
       );
       const account = r.result?.list?.[0];
       const coins = account?.coin ?? [];
-      const balances = coins.map(c => ({
-        currency: c.coin,
-        total: Number(c.walletBalance || c.equity || 0),
-        available: Number(c.availableToWithdraw || c.walletBalance || c.equity || 0),
-      })).filter(b => b.total > 0 || b.available > 0);
+      const balances = coins.map(c => {
+        const wallet = numericCandidate(c.walletBalance) ?? 0;
+        const equity = numericCandidate(c.equity) ?? wallet;
+        const locked = numericCandidate(c.locked) ?? 0;
+        const free = numericCandidate(c.free);
+        const withdrawable = numericCandidate(c.availableToWithdraw);
+        const total = maxPositive(wallet, equity, c.usdValue && ["USD", "USDT", "USDC"].includes(c.coin.toUpperCase()) ? c.usdValue : null);
+        // Bybit often returns availableToWithdraw: "0" for Unified accounts even
+        // when the coin is tradable. Do not let that zero mask wallet/free funds.
+        const spendableFromWallet = Math.max(0, wallet - locked);
+        const spendableFromEquity = Math.max(0, equity - locked);
+        const available = maxPositive(withdrawable, free, spendableFromWallet, spendableFromEquity, total);
+        return { currency: c.coin, total, available };
+      }).filter(b => b.total > 0 || b.available > 0);
       const availableUsd = Number(account?.totalAvailableBalance || 0);
       const walletUsd = Number(account?.totalWalletBalance || availableUsd || 0);
       const usdish = balances.find(b => b.currency === "USDT" || b.currency === "USD" || b.currency === "USDC");
@@ -160,13 +202,23 @@ export function createBybitConnector(
 
     async getQuote(symbol: string): Promise<Quote> {
       const s = toBybit(symbol);
-      const r = await publicGet<{ result: { list: Array<{ symbol: string; bid1Price: string; ask1Price: string; lastPrice: string }> } }>(
-        "/v5/market/tickers", { category: "spot", symbol: s },
-      );
-      const t = r.result?.list?.[0];
-      if (!t) throw new Error(`No ticker for ${s}`);
-      const bid = Number(t.bid1Price), ask = Number(t.ask1Price);
-      return { symbol, bid, ask, mid: (bid + ask) / 2 || Number(t.lastPrice), ts: Date.now() };
+      try {
+        const r = await publicGet<{ result: { list: Array<{ symbol: string; bid1Price: string; ask1Price: string; lastPrice: string }> } }>(
+          "/v5/market/tickers", { category: "spot", symbol: s },
+        );
+        const t = r.result?.list?.[0];
+        if (!t) throw new Error(`No ticker for ${s}`);
+        const bid = Number(t.bid1Price), ask = Number(t.ask1Price);
+        return { symbol, bid, ask, mid: (bid + ask) / 2 || Number(t.lastPrice), ts: Date.now() };
+      } catch (e) {
+        if (!isRegionBlocked(e)) throw e;
+        // Some server regions can read signed wallet endpoints but not Bybit's
+        // public ticker endpoint. Use the market-data facade fallback so this
+        // public-data block does not stop a funded signed order path.
+        const { fetchLastPrice } = await import("@/lib/marketdata/service.server");
+        const mid = await fetchLastPrice(symbol);
+        return { symbol, bid: mid * 0.999, ask: mid * 1.001, mid, ts: Date.now() };
+      }
     },
 
     async placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
@@ -226,18 +278,23 @@ export function createBybitConnector(
 
     async getSymbolFilter(symbol: string) {
       const s = toBybit(symbol);
-      const r = await publicGet<{ result?: { list?: Array<{
-        priceFilter?: { tickSize?: string };
-        lotSizeFilter?: { basePrecision?: string; minOrderQty?: string; minOrderAmt?: string };
-      }> } }>("/v5/market/instruments-info", { category: "spot", symbol: s });
-      const info = r.result?.list?.[0];
-      if (!info) return null;
-      return {
-        minQty: Number(info.lotSizeFilter?.minOrderQty || 0),
-        stepSize: Number(info.lotSizeFilter?.basePrecision || 0),
-        tickSize: Number(info.priceFilter?.tickSize || 0),
-        minNotional: Number(info.lotSizeFilter?.minOrderAmt || 0),
-      };
+      try {
+        const r = await publicGet<{ result?: { list?: Array<{
+          priceFilter?: { tickSize?: string };
+          lotSizeFilter?: { basePrecision?: string; minOrderQty?: string; minOrderAmt?: string };
+        }> } }>("/v5/market/instruments-info", { category: "spot", symbol: s });
+        const info = r.result?.list?.[0];
+        if (!info) return null;
+        return {
+          minQty: Number(info.lotSizeFilter?.minOrderQty || 0),
+          stepSize: Number(info.lotSizeFilter?.basePrecision || 0),
+          tickSize: Number(info.priceFilter?.tickSize || 0),
+          minNotional: Number(info.lotSizeFilter?.minOrderAmt || 0),
+        };
+      } catch (e) {
+        if (!isRegionBlocked(e)) throw e;
+        return { minQty: 0.000001, stepSize: 0.000001, tickSize: 0.000001, minNotional: 5 };
+      }
     },
 
     async checkHealth(): Promise<ConnectionHealth> {

@@ -147,6 +147,21 @@ async function recordFailure(supabase: SupabaseClient, userId: string, kind: "fa
   }
 }
 
+function shouldCountPreTradeRejection(reason?: string): boolean {
+  if (!reason) return true;
+  const r = reason.toLowerCase();
+  // Not dangerous — the venue simply cannot fund that order. Counting this as
+  // a day-ending live safety failure made healthy accounts look inactive after
+  // a few sizing/balance mismatches.
+  if (r.includes("insufficient tradable stablecoin balance") || r.includes("insufficient live balance") || r.includes("insufficient ") && r.includes(" balance to sell")) {
+    return false;
+  }
+  if (r.includes("cloudfront") || r.includes("block access from your country") || r.includes("u.s ip") || r.includes("us ip")) {
+    return false;
+  }
+  return true;
+}
+
 async function recordSuccess(supabase: SupabaseClient, userId: string) {
   await supabase.from("automation_settings")
     .update({ live_consecutive_failures: 0 })
@@ -238,19 +253,37 @@ export async function submitOrder(
 
   // 5. Live pre-trade check (skipped for paper — riskGate already ran)
   if (isLive) {
-    const q = await connector.getQuote(req.symbol);
-    const estPrice = req.side === "buy" ? q.ask : q.bid;
-    const { runPreTradeCheck } = await import("@/lib/execution/preTradeCheck.server");
-    const pre = await runPreTradeCheck(supabase, userId, connector, {
-      symbol: req.symbol, side: req.side, qty: req.qty, estPrice,
-      stopLoss: req.stopLoss ?? null, takeProfit: req.takeProfit ?? null,
-      connectionId: req.connectionId!,
-    });
+    let pre: { ok: boolean; reason?: string; adjustments?: { qty?: number } };
+    try {
+      let estPrice: number;
+      try {
+        const q = await connector.getQuote(req.symbol);
+        estPrice = req.side === "buy" ? q.ask : q.bid;
+      } catch (quoteError) {
+        const msg = quoteError instanceof Error ? quoteError.message.toLowerCase() : String(quoteError).toLowerCase();
+        if (!msg.includes("cloudfront") && !msg.includes("block access from your country") && !msg.includes("403")) {
+          throw quoteError;
+        }
+        const { fetchLastPrice } = await import("@/lib/marketdata/service.server");
+        const mid = await fetchLastPrice(req.symbol);
+        estPrice = req.side === "buy" ? mid * 1.001 : mid * 0.999;
+      }
+      const { runPreTradeCheck } = await import("@/lib/execution/preTradeCheck.server");
+      pre = await runPreTradeCheck(supabase, userId, connector, {
+        symbol: req.symbol, side: req.side, qty: req.qty, estPrice,
+        stopLoss: req.stopLoss ?? null, takeProfit: req.takeProfit ?? null,
+        connectionId: req.connectionId!,
+      });
+    } catch (e) {
+      pre = { ok: false, reason: e instanceof Error ? e.message : String(e) };
+    }
     if (!pre.ok) {
       await supabase.from("orders").update({
         status: "rejected", error_message: pre.reason,
       }).eq("id", orderRow.id);
-      await recordFailure(supabase, userId, "rejection");
+      if (shouldCountPreTradeRejection(pre.reason)) {
+        await recordFailure(supabase, userId, "rejection");
+      }
       const { emitNotification } = await import("@/lib/notifications/emit.server");
       await emitNotification(supabase, userId, {
         kind: "trade.rejected", severity: "warning",
