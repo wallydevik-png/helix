@@ -77,6 +77,19 @@ export async function runAutonomousCycleFor(
   if (!settings) return finish("no_settings");
   const wantsLive = Boolean(settings.autonomous_live_enabled)
     && Boolean(settings.autonomous_default_connection_id);
+  const stalePendingCutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { count: staleLivePending } = await supabase.from("orders").update({
+    status: "error",
+    error_message: "Auto-cleaned: order never reached the venue and has no exchange order id.",
+  }, { count: "exact" })
+    .eq("user_id", userId)
+    .eq("is_live", true)
+    .eq("status", "pending")
+    .is("external_order_id", null)
+    .lt("created_at", stalePendingCutoff);
+  if ((staleLivePending ?? 0) > 0) {
+    errors.push(`cleaned_stale_live_pending:${staleLivePending}`);
+  }
   if (settings.mode !== "autonomous") return finish("mode_not_autonomous", wantsLive);
   if (settings.kill_switch_active) return finish("kill_switch_active", wantsLive);
   if (wantsLive && settings.live_kill_reason?.includes("5 rejected orders today")) {
